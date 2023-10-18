@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List
 from General import Customer, User
 from abc import ABC, abstractmethod
+from decimal import Decimal
 
 # Movie class
 class Movie:
-    def __init__(self, title: str, description: str, duration: int, language: str, releaseDate: datetime, country: str, genre: str):
+    def __init__(self, title: str, description: str, durationMin: int, language: str, releaseDate: datetime, country: str, genre: str):
         self.__title = title
         self.__description = description
-        self.__duration = duration
+        self.__durationMin = durationMin
         self.__language = language
         self.__releaseDate = releaseDate
         self.__country = country
@@ -24,8 +25,8 @@ class Movie:
         return self.__description
 
     @property
-    def duration(self):
-        return self.__duration
+    def durationMin(self):
+        return self.__durationMin
 
     @property
     def language(self):
@@ -47,14 +48,14 @@ class Movie:
     def screeningList(self):
         return self.__screeningList
 
-    def getScreenings(self) -> List["Screening"]:
-        return self.screeningList
 
 # Screening class
 class Screening:
-    def __init__(self, movie: Movie, screeningDate: datetime):
+    def __init__(self, movie: Movie, screeningDate: date, startTime: datetime, endTime: datetime, hall: 'CinemaHall'):
         self.__movie = movie
         self.__screeningDate = screeningDate
+        self.__startTime = startTime
+        self.__endTime = endTime
         self.__cinemaHall: CinemaHall = None
 
     @property
@@ -64,6 +65,14 @@ class Screening:
     @property
     def screeningDate(self):
         return self.__screeningDate
+    
+    @property
+    def startTime(self):
+        return self.__startTime
+    
+    @property
+    def endTime(self):
+        return self.__endTime
 
     @property
     def cinemaHall(self):
@@ -98,10 +107,10 @@ class Booking:
     def seats(self):
         return self.__seats
 
-    def sendNotification(self) -> "Notification":
-        # This is a placeholder. You'll need to implement the actual notification mechanism.
-        notification = Notification(self.customer, "Your booking is confirmed!")
-        return notification
+    def sendNotification(self) -> None:
+
+        notification = Notification(self.customer, f"Your booking of {self.__screening.screeningDate} is confirmed!")
+
 
 # Notification class
 class Notification:
@@ -143,7 +152,7 @@ class CinemaHall:
 
 # CinemaHallSeat class
 class CinemaHallSeat:
-    def __init__(self, seatNumber: int, row: int, seatType: str, isReserved: bool, seatPrice: float):
+    def __init__(self, seatNumber: int, row: int, seatType: str, isReserved: bool, seatPrice: Decimal):
         self.__seatNumber = seatNumber
         self.__row = row
         self.__seatType = seatType
@@ -186,13 +195,14 @@ class Payment(ABC):
     def date(self):
         return self._date
 
+    @abstractmethod
     def paymentDone(self) -> bool:
-        raise NotImplementedError("This method should be implemented in child classes.")
+        pass
 
-    def calcFinalAmount(self) -> float:
-        # This method might include logic to calculate final amount after applying any discounts, taxes etc.
-        # Placeholder for now
-        return self.amount
+    # def calcFinalAmount(self) -> float:
+    #     # This method might include logic to calculate final amount after applying any discounts, taxes etc.
+    #     # Placeholder for now
+    #     return self.amount
 
 # Coupon class
 class Coupon:
@@ -224,13 +234,11 @@ class DebitCard(Payment):
         return self.__cardHolder
 
     def paymentDone(self) -> bool:
-        # Implement the actual debit card payment mechanism here
-        # Placeholder for now
         return True
 
 # CreditCard class
 class CreditCard(Payment):
-    def __init__(self, amount: float, cardNumber: str, cardHolder: str, expiryDate: datetime):
+    def __init__(self, amount: float, cardNumber: str, cardHolder: str, expiryDate: date):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
@@ -249,6 +257,4 @@ class CreditCard(Payment):
         return self.__expiryDate
 
     def paymentDone(self) -> bool:
-        # Implement the actual credit card payment mechanism here
-        # Placeholder for now
         return True

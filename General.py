@@ -74,7 +74,7 @@ class User(Person, ABC):  # inherit
     def login(self) -> bool:
         pass
 
-    def logout(self) -> None:
+    def logout(self) -> bool:
         pass
 
     def resetPassword(self) -> bool:
@@ -123,5 +123,8 @@ class Customer(User):
     def cancelBooking(self) -> bool:
         pass
 
-    def getBookingList(self) -> List:
-        return self.bookingList
+    def addBookings(self, booking: Booking) -> None:
+        self.__bookingList.append(booking)
+
+    def addNoti(self, noti: notification) -> None:
+        self.__notiList.append(noti)

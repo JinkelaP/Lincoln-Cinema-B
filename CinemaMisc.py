@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from typing import List
-from General import Customer, User
+from Generals import Customer, User
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
@@ -149,6 +149,11 @@ class CinemaHall:
     @property
     def seats(self):
         return self.__seats
+    
+    @seats.setter
+    def seats(self, seatList):
+        if seatList is List[CinemaHallSeat]:
+            self.__seats = seatList
 
 # CinemaHallSeat class
 class CinemaHallSeat:

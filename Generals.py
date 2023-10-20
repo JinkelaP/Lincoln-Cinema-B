@@ -1,5 +1,5 @@
 from typing import List
-from CinemaMisc import Movie, Screenings
+from CinemaMisc import Movie, Screening
 from datetime import datetime
 from abc import ABC, abstractmethod
 
@@ -25,8 +25,9 @@ class General(ABC):
 
 # Guest class
 class Guest(General):
-    def register(self) -> None:
-        pass
+    def register(self, name, address, email, phone, username, password) -> ['Customer']:
+        newCustomer = Customer(name, address, email, phone, username, password)
+        return newCustomer
 
 # Person class with basic info
 class Person(General, ABC):
@@ -54,21 +55,25 @@ class Person(General, ABC):
 
 # User
 class User(Person, ABC):  # inherit
+    nextID = 100
     def __init__(self, name: str, address: str, email: str, phone: str, username: str, password: str) -> None:
         super().__init__(name, address, email, phone)
         self._username = username
-        self._password = password
+        self._userPassword = password
+        self._userID = User.nextID
+        User.nextID += 1
+        
 
     @property
     def username(self):
         return self._username
 
     @property
-    def password(self):
+    def userPassword(self):
         return self._password
 
-    @password.setter
-    def password(self, newPassword):
+    @userPassword.setter
+    def userPassword(self, newPassword):
         self._password = newPassword
 
     def login(self) -> bool:

@@ -15,6 +15,7 @@ class Movie:
         self.__country = country
         self.__genre = genre
         self.__screeningList: List[Screening] = []
+        self.__status = True
 
     @property
     def title(self):
@@ -43,6 +44,14 @@ class Movie:
     @property
     def genre(self):
         return self.__genre
+    
+    @property
+    def status(self):
+        return self.__status
+    
+    @status.setter
+    def status(self, i: bool):
+        self.__status = i
 
     @property
     def screeningList(self):
@@ -57,6 +66,8 @@ class Screening:
         self.__startTime = startTime
         self.__endTime = endTime
         self.__cinemaHall: CinemaHall = None
+        self.__seats: List[CinemaHallSeat] = []
+        self.__status = True
 
     @property
     def movie(self):
@@ -77,15 +88,39 @@ class Screening:
     @property
     def cinemaHall(self):
         return self.__cinemaHall
+    
+    @property
+    def seats(self):
+        return self.__seats
+    
+    @property
+    def status(self):
+        return self.__status
+    
+    @status.setter
+    def status(self, i: bool):
+        self.__status = i
+    
+    def addSeat(self,seats: ['CinemaHallSeat']) -> None:
+        self.__seats.append(seats)
+
 
 # Booking class
 class Booking:
-    def __init__(self, bookingNum: str, customer: Customer, screening: Screening):
-        self.__bookingNum = bookingNum
+    nextID = 10000
+    def __init__(self, customer: Customer, screening: Screening, status: bool, numberOfSeats: int, orderTotal: Decimal, paymentDetail: Payment):
+        
+
+        self.__bookingNum = Booking.nextID
         self.__customer = customer
         self.__screening = screening
-        self.__date = datetime.now()
+        self.__numberOfSeats = numberOfSeats
+        self.__status = status
+        self.__orderTotal = orderTotal
+        self.__paymentDetail = paymentDetail
+        self.__createdOn = datetime.now()
         self.__seats: List[CinemaHallSeat] = []
+        Booking.nextID += 1
 
     @property
     def bookingNum(self):
@@ -98,17 +133,44 @@ class Booking:
     @property
     def screening(self):
         return self.__screening
+    
+    @property
+    def numberOfSeats(self):
+        return self.__numberOfSeats
+    
+    @property
+    def status(self):
+        return self.__status
+    
+    @status.setter
+    def status(self, i):
+        self.__status = i
+    
+    @property
+    def orderTotal(self):
+        return self.__orderTotal
+    
+    @property
+    def paymentDetail(self):
+        return self.__paymentDetail
+
 
     @property
-    def date(self):
-        return self.__date
+    def createdOn(self):
+        return self.__createdOn
 
     @property
     def seats(self):
         return self.__seats
+    
+    @seats.setter
+    def status(self, status: bool):
+        self.status = status
+    
+    def addSeat(self,seats: ['CinemaHallSeat']) -> None:
+        self.__seats.append(seats)
 
     def sendNotification(self) -> None:
-
         notification = Notification(self.customer, f"Your booking of {self.__screening.screeningDate} is confirmed!")
 
 
@@ -136,7 +198,7 @@ class CinemaHall:
     def __init__(self, name: str, totalSeats: int):
         self.__name = name
         self.__totalSeats = totalSeats
-        self.__seats: List[CinemaHallSeat] = []
+        # self.__seats: List[CinemaHallSeat] = []
 
     @property
     def name(self):
@@ -146,35 +208,31 @@ class CinemaHall:
     def totalSeats(self):
         return self.__totalSeats
 
-    @property
-    def seats(self):
-        return self.__seats
+    # @property
+    # def seats(self):
+    #     return self.__seats
     
-    @seats.setter
-    def seats(self, seatList):
-        if seatList is List[CinemaHallSeat]:
-            self.__seats = seatList
+    # @seats.setter
+    # def seats(self, seatList):
+    #     if seatList is List[CinemaHallSeat]:
+    #         self.__seats = seatList
 
 # CinemaHallSeat class
 class CinemaHallSeat:
-    def __init__(self, seatNumber: int, row: int, seatType: str, isReserved: bool, seatPrice: Decimal):
-        self.__seatNumber = seatNumber
+    def __init__(self, col: str, row: int, isReserved: bool, seatPrice: Decimal):
+        self.__col = col
         self.__row = row
-        self.__seatType = seatType
         self.__isReserved = isReserved
         self.__seatPrice = seatPrice
+        self.__userID = None
 
     @property
-    def seatNumber(self):
-        return self.__seatNumber
+    def col(self):
+        return self.__col
 
     @property
     def row(self):
         return self.__row
-
-    @property
-    def seatType(self):
-        return self.__seatType
 
     @property
     def isReserved(self):
@@ -183,8 +241,19 @@ class CinemaHallSeat:
     @property
     def seatPrice(self):
         return self.__seatPrice
-
     
+    @property
+    def userID(self):
+        return self.__userID
+    
+    @userID.setter
+    def userID(self, id):
+        self.__userID = id
+    
+    @isReserved.setter
+    def isResearved(self, status: bool):
+        self.__isReserved = status
+
 
 # Abstract Payment class
 class Payment(ABC):
@@ -211,8 +280,9 @@ class Payment(ABC):
 
 # Coupon class
 class Coupon:
-    def __init__(self, couponId: str, discount: float):
+    def __init__(self, couponId: str, discount: int, expiryDate: date):
         self.__couponId = couponId
+        self.__expiryDate = expiryDate
         self.__discount = discount
 
     @property
@@ -222,10 +292,14 @@ class Coupon:
     @property
     def discount(self):
         return self.__discount
+    
+    @property
+    def expiryDate(self):
+        return self.__expiryDate
 
 # DebitCard class
 class DebitCard(Payment):
-    def __init__(self, amount: float, cardNumber: str, cardHolder: str):
+    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
@@ -243,7 +317,7 @@ class DebitCard(Payment):
 
 # CreditCard class
 class CreditCard(Payment):
-    def __init__(self, amount: float, cardNumber: str, cardHolder: str, expiryDate: date):
+    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str, expiryDate: date):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
@@ -260,6 +334,16 @@ class CreditCard(Payment):
     @property
     def expiryDate(self):
         return self.__expiryDate
+
+    def paymentDone(self) -> bool:
+        return True
+    
+#Cash class
+
+# CreditCard class
+class Cash(Payment):
+    def __init__(self, amount: Decimal):
+        super().__init__(amount)
 
     def paymentDone(self) -> bool:
         return True

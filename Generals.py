@@ -11,7 +11,7 @@ class General(ABC):
     def searchMovieTitle(self, title: str) -> List[Movie]:
         pass
 
-    def searchMovieRating(self, rating: int) -> List[Movie]:
+    def searchMovieLang(self, Lang: str) -> List[Movie]:
         pass
 
     def searchMovieGenre(self, genre: str) -> List[Movie]:
@@ -21,7 +21,7 @@ class General(ABC):
         pass
 
     def viewMovieDetails(self, movie: Movie) -> None:
-        pass
+        return f'Title: {movie.title}\nLanguage: {movie.language}\nGenre: {movie.genre}\nDate of Release: {movie.releaseDate}\nDuration: {movie.durationMin}'
 
 # Guest class
 class Guest(General):
@@ -76,13 +76,11 @@ class User(Person, ABC):  # inherit
     def userPassword(self, newPassword):
         self._password = newPassword
 
-    def login(self) -> bool:
-        pass
+    def login(self, psw: str) -> bool:
+        if psw == self._userPassword:
+            return True
 
     def logout(self) -> bool:
-        pass
-
-    def resetPassword(self) -> bool:
         pass
 
 # Admin class
@@ -122,14 +120,9 @@ class Customer(User):
     def notiList(self):
         return self.__notiList
 
-    def makeBooking(self) -> bool:
-        pass
 
-    def cancelBooking(self) -> bool:
-        pass
-
-    def addBookings(self, booking: Booking) -> None:
+    def addBookings(self, booking: ['Booking']) -> None:
         self.__bookingList.append(booking)
 
-    def addNoti(self, noti: notification) -> None:
+    def addNoti(self, noti: ['notification']) -> None:
         self.__notiList.append(noti)

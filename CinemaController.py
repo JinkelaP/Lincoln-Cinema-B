@@ -1,5 +1,5 @@
 from Generals import Guest, Customer, Admin, FrontDeskStaff
-from CinemaMisc import Movie, Screening, Booking, Notification, CinemaHall, CinemaHallSeat, Payment, Coupon, CreditCard, DebitCard
+from CinemaMisc import Movie, Screening, Booking, Notification, CinemaHall, CinemaHallSeat, Payment, Coupon, CreditCard, DebitCard, Cash
 
 from decimal import Decimal
 from datetime import date, datetime, timedelta
@@ -18,6 +18,7 @@ class Cinema:
         self.allAdmin = []
 
         self.allHall = [CinemaHall('H1', 120), CinemaHall('H2', 90), CinemaHall('H3', 110), CinemaHall('H4', 80)]
+        # self.allHall = []
         self.allMovie = []
         self.allScreening = []
         self.publicMsg = []
@@ -33,7 +34,7 @@ class Cinema:
         if userType == 'Customer':
             for i in self.allCustomer:
                 if i.username == userName:
-                    if i.userPassword == psw:
+                    if i.login(psw):
                         self.loggedin = 'Customer'
                         self.loggedUser = i
                         return f'Welcome back, {i.name}!'
@@ -42,7 +43,7 @@ class Cinema:
         elif userType == 'Staff':
             for i in self.allStaff:
                 if i.username == userName:
-                    if i.userPassword == psw:
+                    if i.login(psw):
                         self.loggedin = 'Staff'
                         self.loggedUser = i
                         return f'Welcome back, {i.name}!'
@@ -51,7 +52,7 @@ class Cinema:
         elif userType == 'Admin':
             for i in self.allAdmin:
                 if i.username == userName:
-                    if i.userPassword == psw:
+                    if i.login(psw):
                         self.loggedin = 'Admin'
                         self.loggedUser = i
                         return f'Welcome back, {i.name}!'
@@ -69,6 +70,12 @@ class Cinema:
         self.login(username, password)
 
         return 'You have registered and loggedin!'
+    
+    def logout(self) -> str:
+        tempGuest = Guest()
+        self.loggedUser = tempGuest
+        self.loggedin = 'Guest'
+        return 'You have logged out!'
 
 
     def browseAllMovie(self) -> list:
@@ -83,7 +90,7 @@ class Cinema:
         @param searching the keyword user is searching"""
         result = []
         for i in self.allMovie:
-            if searching in i.movieName or searching in i.lang or searching in i.genre:
+            if searching in i.title or searching in i.lang or searching in i.genre:
                 result.append(i)
         return result
 
@@ -103,7 +110,7 @@ class Cinema:
         """! Show the movie detail
         @param movie the movie object user chosed"""
         if movie in self.allMovie:
-            return f'Title: {movie.movieName}\nLanguage: {movie.lang}\nGenre: {movie.genre}\nDate of Release: {movie.releaseDate}\nDuration: {movie.duration}'
+            return self.loggedUser.viewMovieDetails(movie)
         else:
             return f'Movie not found!'
 
@@ -111,21 +118,23 @@ class Cinema:
         """! Show the movie screening
         @param movie the movie object user chosed"""
         result = []
-        for i in self.allScreening:
-            if i.movieID == movie.movieID:
-                result.append(i)
+        for i in movie.screeningList:
+            result.append(i)
 
         if result == []:
             return result
         else:
-            return result.sort(key=lambda screening: screening.dateT, reverse=True)
+            return result.sort(key=lambda screening: screening.screeningDate, reverse=True)
 
     def checkSeatAvailability(self, screening: Screening) -> list:
         """! Show all seats in the screening
         @param screening the screening object user chosed"""
-        return screening.hallSeat
 
-    def makeBooking(self, screening: Screening, user: Customer, seatID: str, paymentType: str, price: Decimal, coupon=None) -> str:
+        return screening.seats
+
+    def makeBooking(self, screening: Screening, user: Customer, numberOfSeats: int, seats: list, payment: dict, price: Decimal, coupon: Coupon = None) -> str:
+        # payment = {paymentType, cardNumber: str, cardHolder: str, expiryDate: date}
+        
         """! Make a booking, creating the ticket
         @param screening the screening user chosed
         @param user the customer
@@ -135,92 +144,101 @@ class Cinema:
         # create the ticket + put it in user's list + mark unavailable in screening
 
         if coupon:
-            price = price * coupon.discount * 0.01
-            user.removeCoupon(coupon)
+            if coupon.expiryDate >= date.now():
+                price -= coupon.discount
+            else:
+                return 'Invalid Coupon'
 
-        newTicket = Ticket(user.userID, Screening.screeningID,
-                           datetime.now, seatID, paymentType, price)
+        if payment['paymentType'] == 'credit':
+            paymentNew = CreditCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+        elif payment['paymentType'] == 'debit':
+            paymentNew = DebitCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+        else:
+            paymentNew = Cash(price)
 
-        user.addTicket(newTicket)
-        screening.markSeatFalse(seatID, user.userID)
-        msg = f'You have successfully purchased a ticket! No. {newTicket.ticketID}'
-        user.userMsgAdd(msg)
+
+        newBooking = Booking(user, screening, True, numberOfSeats, price, paymentNew)
+        for i in seats:
+            i.isReserved = False
+            newBooking.addSeat(i)
+
+        user.addBookings(newBooking)
+        msg = f'You have successfully purchased the ticket!'
+        user.addNoti(Notification(user, msg))
         return msg
 
-    def removeTicket(self, user: Customer, ticket: Ticket) -> str:
+    def removeBooking(self, user: Customer, ticket: Booking) -> str:
         """! deactivate a ticket
         @param user the customer
         @param ticket the ticket"""
-        for i in user.coupon:
-            if i == ticket:
-                user.removeTicket(ticket)
-                break
 
-        msg = f'You have successfully cancelled a ticket!'
-        user.userMsgAdd(msg)
+        ticket.status = False
+        for i in ticket.seats:
+            i.isReserved = False
+
+        msg = f'You have successfully cancelled the tickets!'
+        user.addNoti(Notification(user, msg))
         return msg
 
-    def addMovie(self, name: str, langauge: str, genre: str, releaseDate: date, duration: int) -> str:
+    def addMovie(self, title: str, description: str, durationMin: int, language: str, releaseDate: datetime, country: str, genre: str) -> str:
         """! add a movie to the list
     @param name The name of the movie.
     @param langauge The language of the movie.
     @param genre The genre of the movie (e.g., action, drama).
     @param releaseDate The official release date of the movie.
     @param duration The duration of the movie in minutes."""
-        newMovie = Movie(name, langauge, genre, releaseDate, duration)
+        newMovie = Movie(title, description, durationMin, language, releaseDate, country, genre)
         self.allMovie.append(newMovie)
         msg = f'You have successfully added a movie!'
         return msg
 
     
-    def hallSeatCreate(hall: Hall) -> list:
+    def addScreening(self, movie: Movie, dateT: datetime, hallName: str) -> str:
+        """! add a movie screening
+        @param movie the movie
+        @param dateT the start datetime
+        @param hall the hall"""
+        # validate datetime conflicts, generate seats
+        dateTEnd = dateT + timedelta(minutes=movie.durationMin)
+        for i in self.allScreening:
+            if dateT < i.endTime and dateTEnd > i.startTime:
+                if i.CinemaHall.name == hallName:
+                    return 'Creat screening failed. Time Conflicts detected.'
+        else:
+            for i in self.allHall:
+                if i.name == hallName:
+                    hallSeat = self.hallSeatCreate(i)
+                    newScreening = Screening(movie, dateT.date(), dateT, dateTEnd, i, hallSeat)
+                    self.allScreening.append(newScreening)
+                    return 'Creat screening success.'
+    
+    def hallSeatCreate(hall: CinemaHall, priceTicket) -> list:
         """!@brief create seats in the screening hall"""
         maxRow = 15
         nowRow = 1
         nowCol = 'A'
 
         result = []
-        for i in range(hall.hallCapacity):
+        for i in range(hall.totalSeats):
             if nowRow <= maxRow:
-                result.append(Seat(nowCol, nowRow))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
             else:
                 nowRow = 1
                 nowCol = chr(ord(nowCol) + 1)
-                result.append(Seat(nowCol, nowRow))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
             nowRow += 1
 
         return result
-
-    
-    def addScreening(self, movie: Movie, dateT: datetime, hall: Hall) -> str:
-        """! add a movie screening
-        @param movie the movie
-        @param dateT the start datetime
-        @param hall the hall"""
-        # validate datetime conflicts, generate seats
-        datetEndPlus = ((movie.duration / 30) + 1) * 30
-        dateTEnd = dateT + timedelta(minutes=datetEndPlus)
-        for i in self.allScreening:
-            if dateT < i.dateTEnd and dateTEnd > i.dateT:
-                if i.hallID == hall.hallID:
-                    return 'Creat screening failed. Time Conflicts detected.'
-        else:
-            hallSeat = self.hallSeatCreate(hall)
-            newScreening = Screening(
-                movie.movieID, dateT, dateTEnd, hall.hallID, hallSeat)
-            return 'Creat screening success.'
 
     
     def removeMovie(self, movie: Movie) -> str:
         """! remove a movie, including screenings
         @param movie the movie"""
         # remove movie + deactivate screenings
-        movieID = movie.movieID
-        if movie in self.allMovie:
-            self.allMovie.remove(movie)
+        movie.status = False
 
         for i in self.allScreening:
-            if i.movieID == movieID:
+            if i.movie == movie:
                 self.removeScreening(i)
 
         return 'Movie removed. Screenings cancelled (if available).'
@@ -228,33 +246,23 @@ class Cinema:
     
     def removeScreening(self, screening: Screening) -> str:
         """! remove a screening, including refund.
-    @param screening the screening"""
-        for i in self.allScreening:
-            if i == screening:
-                i.valid = False
-                for a in i.hallSeat:
-                    if type(a.userID) is int:
-                        for user in self.allCustomer:
-                            if user.userID == a.userID:
-                                user.userMsgAdd(
-                                    f'The screening your booked on {screening.dateT.strftime("%d-%m-%Y, %H:%M")} has been cancelled.')
-                                for ticket in user.ticket:
-                                    if ticket.screeningID == screening.screeningID:
-                                        ticket.valid = False
+        @param screening the screening"""
+
+        screening.status = False
+        for a in screening.seats:
+            if type(a.userID) == int:
+                for user in self.allCustomer:
+                    if user.userID == a.userID:
+                        user.addNoti(user, f'The screening your booked on {screening.screeningDate.strftime("%d-%m-%Y")} has been cancelled.')
+                        for ticket in user.bookingList:
+                            if ticket.screening == screening:
+                                ticket.status = False
 
         return 'Screening cancelled. Customers has been notified.'
 
-    
-    def isValidCoupon(coupon: Coupon) -> bool:
-        """! check if a coupon is valid
-        @param coupon the coupon"""
-        if coupon.valid != True or coupon.expireDate < datetime.now().date():
-            return False
-        else:
-            return True
+
         
     def sendPublicMsg(self, msg: str) -> str:
-        """! check if a coupon is valid
-        @param msg the message"""
+        """@param msg the message"""
         self.publicMsg.append([datetime.now(), msg])
         return 'Public message sent!'

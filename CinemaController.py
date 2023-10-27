@@ -1,5 +1,4 @@
-from Generals import Guest, Customer, Admin, FrontDeskStaff
-from CinemaMisc import Movie, Screening, Booking, Notification, CinemaHall, CinemaHallSeat, Payment, Coupon, CreditCard, DebitCard, Cash
+from Generals import Guest, Customer, Admin, FrontDeskStaff, Movie, Screening, Booking, Notification, CinemaHall, CinemaHallSeat, Payment, Coupon, CreditCard, DebitCard, Cash
 
 from decimal import Decimal
 from datetime import date, datetime, timedelta
@@ -88,11 +87,7 @@ class Cinema:
     def searchMovieByStr(self, searching: str) -> list:
         """! Handle all search except date
         @param searching the keyword user is searching"""
-        result = []
-        for i in self.allMovie:
-            if searching in i.title or searching in i.lang or searching in i.genre:
-                result.append(i)
-        return result
+        return self.loggedUser.searchMovieTitleLangGenre(searching, self.allMovie)
 
     def searchMovieByDateAfter(self, searching: date) -> list:
         """! Handle date search
@@ -181,12 +176,8 @@ class Cinema:
         return msg
 
     def addMovie(self, title: str, description: str, durationMin: int, language: str, releaseDate: datetime, country: str, genre: str) -> str:
-        """! add a movie to the list
-    @param name The name of the movie.
-    @param langauge The language of the movie.
-    @param genre The genre of the movie (e.g., action, drama).
-    @param releaseDate The official release date of the movie.
-    @param duration The duration of the movie in minutes."""
+        """! add a movie to the list"""
+    
         newMovie = Movie(title, description, durationMin, language, releaseDate, country, genre)
         self.allMovie.append(newMovie)
         msg = f'You have successfully added a movie!'

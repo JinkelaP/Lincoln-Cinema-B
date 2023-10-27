@@ -8,14 +8,13 @@ from decimal import Decimal
 
 class General(ABC):
 
-    def searchMovieTitle(self, title: str) -> List['Movie']:
-        pass
+    def searchMovieTitleLangGenre(self, searching: str, movieList: List['Movie']) -> List['Movie']:
+        result = []
+        for i in movieList:
+            if searching in i.title or searching in i.lang or searching in i.genre:
+                result.append(i)
+        return result
 
-    def searchMovieLang(self, Lang: str) -> List['Movie']:
-        pass
-
-    def searchMovieGenre(self, genre: str) -> List['Movie']:
-        pass
 
     def searchMovieDate(self, date: datetime) -> List['Movie']:
         pass

@@ -229,7 +229,6 @@ class Cinema:
         return 'Screening cancelled. Customers has been notified.'
 
 
-        
     def sendPublicMsg(self, msg: str) -> str:
 
         self.publicMsg.append([datetime.now(), msg])

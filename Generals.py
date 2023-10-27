@@ -130,7 +130,7 @@ class Admin(User):
     def cancelScreening(self, screening) -> None:
         screening.status = False
 
-# FrontDeskStaff class
+
 
 
 class FrontDeskStaff(User):
@@ -138,7 +138,7 @@ class FrontDeskStaff(User):
 
 # Customer class
 
-
+# FrontDeskStaff class
 class Customer(User):
     def __init__(self, name: str, address: str, email: str, phone: str, username: str, password: str) -> None:
         super().__init__(name, address, email, phone, username, password)

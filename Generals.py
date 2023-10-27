@@ -11,7 +11,7 @@ class General(ABC):
     def searchMovieTitleLangGenre(self, searching: str, movieList: List['Movie']) -> List['Movie']:
         result = []
         for i in movieList:
-            if searching in i.title or searching in i.lang or searching in i.genre:
+            if searching in i.title or searching in i.language or searching in i.genre:
                 result.append(i)
         return result
 
@@ -94,7 +94,7 @@ class User(Person, ABC):  # inherit
 
     @userPassword.setter
     def userPassword(self, newPassword):
-        self._password = newPassword
+        self._userPassword = newPassword
 
     def login(self, psw: str) -> bool:
         if psw == self._userPassword:
@@ -103,7 +103,7 @@ class User(Person, ABC):  # inherit
     def logout(self) -> bool:
         pass
 
-    def makeBooking(self, user, screening, numberOfSeats, price, paymentNew) -> Booking:
+    def makeBooking(self, user, screening, numberOfSeats, price, paymentNew) -> 'Booking':
         return Booking(user, screening, True, numberOfSeats, price, paymentNew)
 
     def cancelBooking(self, ticket):
@@ -265,7 +265,7 @@ class Screening:
 class Booking:
     nextID = 10000
 
-    def __init__(self, customer: Customer, screening: Screening, status: bool, numberOfSeats: int, orderTotal: Decimal, paymentDetail: Payment):
+    def __init__(self, customer: Customer, screening: Screening, status: bool, numberOfSeats: int, orderTotal: Decimal, paymentDetail: 'Payment'):
 
         self.__bookingNum = Booking.nextID
         self.__customer = customer
@@ -433,10 +433,6 @@ class Payment(ABC):
     def paymentDone(self) -> bool:
         pass
 
-    # def calcFinalAmount(self) -> float:
-    #     # This method might include logic to calculate final amount after applying any discounts, taxes etc.
-    #     # Placeholder for now
-    #     return self.amount
 
 # Coupon class
 
@@ -476,8 +472,6 @@ class DebitCard(Payment):
     def cardHolder(self):
         return self.__cardHolder
 
-    def paymentDone(self) -> bool:
-        return True
 
 # CreditCard class
 
@@ -501,8 +495,6 @@ class CreditCard(Payment):
     def expiryDate(self):
         return self.__expiryDate
 
-    def paymentDone(self) -> bool:
-        return True
 
 # Cash class
 
@@ -512,6 +504,3 @@ class CreditCard(Payment):
 class Cash(Payment):
     def __init__(self, amount: Decimal):
         super().__init__(amount)
-
-    def paymentDone(self) -> bool:
-        return True

@@ -16,11 +16,19 @@ class General(ABC):
         return result
 
 
-    def searchMovieDate(self, date: datetime) -> List['Movie']:
-        pass
+    def searchMovieDate(self, date: datetime, movieList: List['Movie']) -> List['Movie']:
+        result = []
+        for i in movieList:
+            if i.releaseDate > date:
+                result.append(i)
+        if result == []:
+            return result
+        else:
+            return result.sort(key=lambda movie: movie.releaseDate)
 
     def viewMovieDetails(self, movie: ['Movie']) -> None:
         movieInfo = {
+            'status': 1,
             'title': movie.title, 
             'language': movie.language, 
             'genre': movie.genre,
@@ -95,31 +103,38 @@ class User(Person, ABC):  # inherit
     def logout(self) -> bool:
         pass
 
+    def makeBooking(self, user, screening, numberOfSeats, price, paymentNew) -> Booking:
+        return Booking(user, screening, True, numberOfSeats, price, paymentNew)
+
+    def cancelBooking(self, ticket):
+        ticket.status = False
+        for i in ticket.seats:
+            i.isReserved = False
+
 # Admin class
 
 
 class Admin(User):
-    def addMovie(self) -> bool:
-        pass
+    def addMovie(self, title, description, durationMin, language, releaseDate, country, genre, allMovie) -> bool:
+        newMovie = Movie(title, description, durationMin, language, releaseDate, country, genre)
+        allMovie.append(newMovie)
+        return allMovie
 
-    def addScreening(self) -> bool:
-        pass
+    def addScreening(self, movie, date, dateT, dateTEnd, cinemaHall, hallSeat, allScreening) -> bool:
+        newScreening = Screening(movie, date, dateT, dateTEnd, cinemaHall, hallSeat)
+        allScreening.append(newScreening)
 
-    def cancelMovie(self) -> bool:
-        pass
+    def cancelMovie(self, movie) -> None:
+        movie.status = False
 
-    def cancelScreening(self) -> bool:
-        pass
+    def cancelScreening(self, screening) -> None:
+        screening.status = False
 
 # FrontDeskStaff class
 
 
 class FrontDeskStaff(User):
-    def makeBooking(self) -> bool:
-        pass
-
-    def cancelBooking(self) -> bool:
-        pass
+    pass
 
 # Customer class
 

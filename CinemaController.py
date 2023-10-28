@@ -34,14 +34,14 @@ class Cinema:
                 for line in adminFile:
                     data = line.strip()
                     data = data.split(",")
-                    adminObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    adminObject = Admin(data[0], data[1], data[2], data[3], data[4], data[5])
                     self.allAdmin.append(adminObject)
                 
                 staffFile = open("StaffData.txt", "r")
                 for line in staffFile:
                     data = line.strip()
                     data = data.split(",")
-                    staffObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    staffObject = FrontDeskStaff(data[0], data[1], data[2], data[3], data[4], data[5])
                     self.allStaff.append(staffObject)
 
                 movieFile = open("MovieData.txt", "r")
@@ -50,19 +50,22 @@ class Cinema:
                     data = data.split(",")
                     movieObject = Movie(data[0], data[1], int(data[2]), data[3], datetime.fromisoformat(data[4]).date(), data[5], data[6])
                     self.allMovie.append(movieObject)
+
+                self.loggedUser = self.allAdmin[0]
                 self.addScreening(self.allMovie[0], datetime.now() + timedelta(days=2), 'H2')
                 self.addScreening(self.allMovie[1], datetime.now() + timedelta(days=5), 'H1')
                 self.addScreening(self.allMovie[2], datetime.now() + timedelta(days=4), 'H3')
-            
+
+                self.loggedUser = Guest()
                 self.readFileStatus = True
-                return {'Status': 'Done'}
+                return {'status': 'Done'}
             
             else:
-                return {'Status': 'Has read'}
+                return {'status': 'Has read'}
 
 
         except Exception as e:
-            return {'Status': 'Error'}
+            return {'status': e}
 
 
     def login(self, userName: str, psw: str, userType: str) -> str:
@@ -221,20 +224,20 @@ class Cinema:
                     
                     return 'Creat screening success.'
     
-    def hallSeatCreate(hall: CinemaHall, priceTicket) -> list:
+    def hallSeatCreate(self, theHall: CinemaHall) -> list:
         """!@brief create seats in the screening hall"""
         maxRow = 15
         nowRow = 1
         nowCol = 'A'
 
         result = []
-        for i in range(hall.totalSeats):
+        for i in range(theHall.totalSeats):
             if nowRow <= maxRow:
-                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, 30))
             else:
                 nowRow = 1
                 nowCol = chr(ord(nowCol) + 1)
-                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, 30))
             nowRow += 1
 
         return result

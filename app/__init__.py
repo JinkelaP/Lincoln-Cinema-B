@@ -2,6 +2,7 @@ from flask import Flask
 
 def create_app():
     app = Flask(__name__, static_folder='static')
+    app.secret_key = 'haha'
 
     from . import login, logout, reg, adminDashboard1, customerDashboard, index
     # import the Blueprints

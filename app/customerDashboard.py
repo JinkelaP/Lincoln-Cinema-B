@@ -1,4 +1,4 @@
-from app import mysql
+
 from flask import flash, render_template, request, redirect, url_for, session, Blueprint, jsonify
 import json
 import os

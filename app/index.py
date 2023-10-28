@@ -25,3 +25,6 @@ def indexPage():
             'name': user.name
         }
         return render_template('index.html', accountInfo=accountInfo, movieList=movieList)
+    
+@bp.route("/search", methods=['GET'])
+def movieSearch():

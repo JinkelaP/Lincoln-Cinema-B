@@ -1,39 +1,18 @@
-from app import mysql
+
 from flask import flash, render_template, request, redirect, url_for, session, Blueprint
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
-import bcrypt
 import os
-import math
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from flask import jsonify
-from itertools import groupby
-from operator import itemgetter
-import json
-import simplejson
+from globalController import lincolnCinema
+
 
 bp = Blueprint('adminDashboard1', __name__, )
 
 def is_authenticated():
-    return 'loggedin' in session
+    return lincolnCinema.loggedin
 
-def userNameCrash(userName):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT * FROM users WHERE userActive = True and userName = %s', (userName,))
-    exist_account = cursor.fetchone()
-    if exist_account:
-        return 1
-    else:
-        return 0
 
-# encapsulate the passwordEncrypt function
-def passwordEncrypt(userPassword):
-    bytes = userPassword.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hashedPsw = bcrypt.hashpw(bytes, salt)
-    return hashedPsw    
-    
 @bp.route('/hqAdmin/home')
 def adminDashboard1():
     if not 'loggedin' in session or session['role'] != 'HQ_Admin':
@@ -111,98 +90,6 @@ def adminDashboard1():
 
     return render_template('adminDashboard1.html', branches=branches)
 
-@bp.route('/hqAdmin/reports')
-def reports():
-    if not 'loggedin' in session or session['role'] != 'HQ_Admin':
-        return redirect(url_for('login.login'))
-    
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Fetch info from the database
-
-    branch = {}
-
-    cursor.execute('SELECT * FROM simplePromotions WHERE sPromoActive = TRUE')
-    branch['simplePromo'] = cursor.fetchall()
-
-    for i in branch['simplePromo']:
-        i['startDate'] = i['startDate'].isoformat()
-        i['endDate'] = i['endDate'].isoformat()
-
-    cursor.execute('SELECT * FROM comboPromotions WHERE cPromoActive = TRUE')
-    branch['comboPromo'] = cursor.fetchall()
-
-    for i in branch['comboPromo']:
-        i['startDate'] = i['startDate'].isoformat()
-        i['endDate'] = i['endDate'].isoformat()
-
-    cursor.execute('SELECT SUM(totalAmount) AS total FROM orders WHERE orderActive = TRUE')
-    totalAmount = cursor.fetchone()
-
-    cursor.execute('SELECT COUNT(orderID) AS total FROM orders WHERE orderActive = TRUE')
-    totalOrder = cursor.fetchone()
-
-    cursor.execute('SELECT orderDate, totalAmount, branchID, deliveryOption FROM orders WHERE orderDate BETWEEN NOW() - INTERVAL 30 DAY AND NOW() ORDER BY orderDate DESC;')
-    orders30Days = cursor.fetchall()
-
-    for i in orders30Days:
-        i['orderDate'] = i['orderDate'].isoformat()
-
-    cursor.execute('SELECT COUNT(customerID) AS total FROM customers WHERE customerActive = TRUE')
-    totalCustomer = cursor.fetchone()
-
-    cursor.execute('SELECT od.productID, COUNT(od.productID) as count FROM orderDetails od\
-    JOIN orders o ON od.orderID = o.orderID\
-    WHERE  o.orderDate BETWEEN NOW() - INTERVAL 30 DAY AND NOW()\
-    GROUP BY od.productID ORDER BY count DESC')
-    topProducts30 = cursor.fetchall()
-
-    cursor.execute('SELECT od.productID, COUNT(od.productID) as count FROM orderDetails od\
-    JOIN orders o ON od.orderID = o.orderID\
-    GROUP BY od.productID ORDER BY count DESC')
-    topProductsAll = cursor.fetchall()
-
-    for i in topProducts30:
-        if i['productID'] < 200:
-            cursor.execute("SELECT * FROM pizzas WHERE pizzaID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['pizzaName']
-
-        elif i['productID'] < 300:
-            cursor.execute("SELECT * FROM sideOfferings WHERE sideOfferingID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['offeringName']
-
-        else:
-            cursor.execute("SELECT * FROM drinks WHERE drinkID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['drinkName']
-
-    for i in topProductsAll:
-        if i['productID'] < 200:
-            cursor.execute("SELECT * FROM pizzas WHERE pizzaID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['pizzaName']
-
-        elif i['productID'] < 300:
-            cursor.execute("SELECT * FROM sideOfferings WHERE sideOfferingID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['offeringName']
-
-        else:
-            cursor.execute("SELECT * FROM drinks WHERE drinkID = %s;", (i['productID'],))
-            productName = cursor.fetchone()
-            i['productID'] = productName['drinkName']
-    
-    branch['totalAmounts'] = totalAmount
-    branch['totalOrder'] = totalOrder
-    branch['totalCustomer'] = totalCustomer
-    branch['orders30Days'] = orders30Days
-    branch['topProducts30'] = topProducts30
-    branch['topProductsAll'] = topProductsAll
-
-    return render_template('nationalReports.html', nationalInfo=simplejson.dumps(branch, use_decimal=True)) 
-
 @bp.route('/hqadmin/profile')
 def hqadminProfile():    
     if is_authenticated():
@@ -217,8 +104,7 @@ def hqadminProfile():
     else:
         return redirect(url_for('login.login'))    
     
-@bp.route('/hqadmin/update_profile', methods=['GET', 'POST'])
-def updateProfile():
+
     if is_authenticated():
         userID = request.form.get('userID')        
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
@@ -345,60 +231,8 @@ def addPizza():
     return redirect(url_for('login.login'))
 
 
-@bp.route('/editPizzaMain', methods=['POST'])
-def editPizzaMain():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        pizzaOriginalName = request.form['pizzaOriginalName']
-        pizzaNewName = request.form['pizzaName']
-        description = request.form['description']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Fetch all pizzaIDs that match the original pizza name
-        cursor.execute('SELECT pizzaID FROM pizzas WHERE pizzaName = %s', (pizzaOriginalName,))
-        all_pizzaIDs = [row['pizzaID'] for row in cursor.fetchall()]
-
-        # Update the pizzaName and description for all pizzaIDs that match the original pizza name
-        for pizzaID in all_pizzaIDs:
-            cursor.execute('UPDATE pizzas SET pizzaName = %s, description = %s WHERE pizzaID = %s', 
-                           (pizzaNewName, description, pizzaID))
-            
-            if 'pizzaImage' in request.files and request.files['pizzaImage'].filename != '':
-                image = request.files.get('pizzaImage')
-                imageName = f"{pizzaID}.jpg"
-                filePath = os.path.join('app', 'static', 'image', imageName)
-                with open(filePath, 'wb') as f:
-                    f.write(image.read())
-                # reset the file pointer to the beginning of the file
-                image.seek(0)
-        
-        mysql.connection.commit()
-        cursor.close()
-        
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-
-    return redirect(url_for('login.login'))
 
 
-
-
-@bp.route('/editPizzaSize', methods=['POST'])
-def editPizzaSize():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        pizzaID = request.form['pizzaID']
-        price = request.form['price']
-        preparetime = request.form['preparetime']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute('UPDATE pizzas SET price = %s, preparetime = %s WHERE pizzaID = %s', (price, preparetime, pizzaID))
-        
-        mysql.connection.commit()
-        cursor.close()
-
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-
-    return redirect(url_for('login.login'))
 
 
 @bp.route('/deletePizzas', methods=['POST'])
@@ -423,230 +257,3 @@ def deletePizzas():
         return jsonify(success=True)
 
     return jsonify(success=False, error="Unauthorized access")
-
-
-
-
-@bp.errorhandler(500)
-def server_error(e):
-    return jsonify(success=False, error="Internal server error"), 500
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@bp.route('/addSideOffering', methods=['POST'])
-def addSideOffering():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        offeringName = request.form['offeringName']
-        description = request.form['description']
-        price = request.form['price']
-        preparetime = request.form['preparetime']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO sideOfferings (offeringName, description, price, preparetime) VALUES (%s, %s, %s, %s)', (offeringName, description, price, preparetime))
-        # fetch the id of the side offering that was just inserted
-        sideOfferingId = cursor.lastrowid  
-        
-        if 'image' in request.files and request.files['image'].filename != '':
-            image = request.files.get('image')                
-            imageName = f"{sideOfferingId}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            image.save(filePath)
-
-        mysql.connection.commit()
-        cursor.close()
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-    return redirect(url_for('login.login'))
-
-@bp.route('/editSideOffering', methods=['POST'])
-def editSideOffering():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        sideOfferingId = request.form['sideOfferingId']
-        editOfferingName = request.form['editOfferingName']
-        editDescription = request.form['editDescription']
-        editPrice = request.form['editPrice']
-        editPrepareTime = request.form['editPrepareTime']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-        if 'editImage' in request.files and request.files['editImage'].filename != '':
-            image = request.files.get('editImage')                
-            imageName = f"{sideOfferingId}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            image.save(filePath)
-
-        cursor.execute('UPDATE sideOfferings SET offeringName=%s, description=%s, price=%s, preparetime=%s WHERE sideOfferingID=%s', (editOfferingName, editDescription, editPrice, editPrepareTime, sideOfferingId))
-        
-        mysql.connection.commit()
-        cursor.close()
-
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-    return redirect(url_for('login.login'))
-
-@bp.route('/deleteSideOffering', methods=['POST'])
-def deleteSideOffering():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        sideOfferingId = request.form['id']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        # Soft delete the sideOffering by setting its sideOfferingActive attribute to false
-        cursor.execute('UPDATE sideOfferings SET sideOfferingActive = FALSE WHERE sideOfferingID = %s', [sideOfferingId])
-        mysql.connection.commit()
-        cursor.close()
-        return jsonify(success=True)
-    return jsonify(success=False, error="Authentication failed.")
-
-
-
-
-@bp.route('/addDrink', methods=['POST'])
-def addDrink():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        drinkName = request.form['drinkName']
-        description = request.form['description']
-        price = request.form['price']
-        preparetime = request.form['preparetime']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute('INSERT INTO drinks (drinkName, description, price, preparetime) VALUES (%s, %s, %s, %s)', (drinkName, description, price, preparetime))
-        drinkID = cursor.lastrowid  # fetch the id of the drink that was just inserted
-        
-        if 'drinkImage' in request.files and request.files['drinkImage'].filename != '':
-            drinkImage = request.files.get('drinkImage')                
-            imageName = f"{drinkID}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            drinkImage.save(filePath)
-        
-        mysql.connection.commit()
-        cursor.close()
-
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-
-    return redirect(url_for('login.login'))
-
-@bp.route('/editDrink', methods=['POST'])
-def editDrink():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        # Fetching the form data
-        drinkId = request.form['drinkId']
-        drinkName = request.form['drinkName']
-        description = request.form['description']
-        price = request.form['price']
-        preparetime = request.form['preparetime']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Updating the drink's data in the database
-        cursor.execute('UPDATE drinks SET drinkName = %s, description = %s, price = %s, preparetime = %s WHERE drinkID = %s', (drinkName, description, price, preparetime, drinkId))
-        
-        # If a new image is uploaded, save it
-        if 'drinkImage' in request.files and request.files['drinkImage'].filename != '':
-            drinkImage = request.files.get('drinkImage')                
-            imageName = f"{drinkId}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            drinkImage.save(filePath)
-        
-        mysql.connection.commit()
-        cursor.close()
-
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-
-    return redirect(url_for('login.login'))
-
-
-@bp.route('/deleteDrink', methods=['POST'])
-def deleteDrink():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        drinkId = request.form['id']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute('UPDATE drinks SET drinkActive = FALSE WHERE drinkID = %s', [drinkId])
-        
-        mysql.connection.commit()
-        cursor.close()
-
-        return jsonify(success=True)
-
-    return jsonify(success=False, error="Authentication failed.")
-
-
-@bp.route('/addTopping', methods=['POST'])
-def addTopping():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        toppingName = request.form['toppingName']
-        description = request.form['toppingDescription']
-        price = request.form['toppingPrice']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO toppings (toppingName, description, price) VALUES (%s, %s, %s)', (toppingName, description, price))
-        
-        toppingId = cursor.lastrowid
-        
-        if 'toppingImage' in request.files and request.files['toppingImage'].filename != '':
-            toppingImage = request.files.get('toppingImage')                
-            imageName = f"{toppingId}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            toppingImage.save(filePath)
-
-        mysql.connection.commit()
-        cursor.close()
-
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-
-    return redirect(url_for('login.login'))
-
-@bp.route('/editTopping', methods=['POST'])
-def editTopping():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        # fetch the form data
-        toppingId = request.form['toppingId']
-        toppingName = request.form['toppingName']
-        description = request.form['description']
-        price = request.form['price']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-        # update the topping's data in the database
-        cursor.execute('UPDATE toppings SET toppingName = %s, description = %s, price = %s WHERE toppingID = %s', (toppingName, description, price, toppingId))
-        
-        # if a new image is uploaded, save it
-        if 'toppingImage' in request.files and request.files['toppingImage'].filename != '':
-            toppingImage = request.files.get('toppingImage')                
-            imageName = f"{toppingId}.jpg"                
-            filePath = os.path.join('app', 'static', 'image', imageName)
-            toppingImage.save(filePath)
-
-        mysql.connection.commit()
-        cursor.close()
-
-        return jsonify(success=True)
-
-    return jsonify(success=False, error="Authentication failed.")
-
-
-@bp.route('/deleteTopping', methods=['POST'])
-def deleteTopping():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        toppingId = request.form['id']
-
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-        cursor.execute('UPDATE toppings SET toppingActive = FALSE WHERE toppingID = %s', [toppingId])
-
-        mysql.connection.commit()
-        cursor.close()
-
-        return jsonify(success=True)
-
-    return jsonify(success=False, error="Authentication failed.")

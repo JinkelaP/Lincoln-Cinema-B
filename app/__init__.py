@@ -1,13 +1,4 @@
 from flask import Flask
-from flask_mysqldb import MySQL
-
-from . import index
-
-# from app import yourPyFileName
-# from app import login,admin,logout
-# from app import temporaryIndex
-
-mysql = MySQL()
 
 def create_app():
     app = Flask(__name__, static_folder='static')

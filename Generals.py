@@ -24,7 +24,8 @@ class General(ABC):
         if result == []:
             return result
         else:
-            return result.sort(key=lambda movie: movie.releaseDate)
+            result.sort(key=lambda movie: movie.releaseDate, reverse=True)
+            return result
 
     def viewMovieDetails(self, movie: ['Movie']) -> None:
         movieInfo = {
@@ -90,7 +91,7 @@ class User(Person, ABC):  # inherit
 
     @property
     def userPassword(self):
-        return self._password
+        return self._userPassword
 
     @userPassword.setter
     def userPassword(self, newPassword):
@@ -118,11 +119,12 @@ class Admin(User):
     def addMovie(self, title, description, durationMin, language, releaseDate, country, genre, allMovie) -> bool:
         newMovie = Movie(title, description, durationMin, language, releaseDate, country, genre)
         allMovie.append(newMovie)
-        return allMovie
+        return newMovie
 
     def addScreening(self, movie, date, dateT, dateTEnd, cinemaHall, hallSeat, allScreening) -> bool:
         newScreening = Screening(movie, date, dateT, dateTEnd, cinemaHall, hallSeat)
         allScreening.append(newScreening)
+        return newScreening
 
     def cancelMovie(self, movie) -> None:
         movie.status = False
@@ -216,7 +218,7 @@ class Movie:
 
 # Screening class
 class Screening:
-    def __init__(self, movie: Movie, screeningDate: date, startTime: datetime, endTime: datetime, hall: 'CinemaHall'):
+    def __init__(self, movie: Movie, screeningDate: date, startTime: datetime, endTime: datetime, hall: 'CinemaHall', hallSeat: List['CinemaHallSeat']):
         self.__movie = movie
         self.__screeningDate = screeningDate
         self.__startTime = startTime
@@ -299,7 +301,7 @@ class Booking:
         return self.__status
 
     @status.setter
-    def status(self, i):
+    def status(self, i:bool):
         self.__status = i
 
     @property
@@ -319,15 +321,12 @@ class Booking:
         return self.__seats
 
     @seats.setter
-    def status(self, status: bool):
-        self.status = status
+    def seats(self, seats: list):
+        self.__seats = seats
 
     def addSeat(self, seats: ['CinemaHallSeat']) -> None:
         self.__seats.append(seats)
 
-    def sendNotification(self) -> None:
-        notification = Notification(
-            self.customer, f"Your booking of {self.__screening.screeningDate} is confirmed!")
 
 
 # Notification class
@@ -411,7 +410,7 @@ class CinemaHallSeat:
         self.__userID = id
 
     @isReserved.setter
-    def isResearved(self, status: bool):
+    def isReserved(self, status: bool):
         self.__isReserved = status
 
 
@@ -429,9 +428,6 @@ class Payment(ABC):
     def date(self):
         return self._date
 
-    @abstractmethod
-    def paymentDone(self) -> bool:
-        pass
 
 
 # Coupon class

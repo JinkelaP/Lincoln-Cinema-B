@@ -164,7 +164,7 @@ class Customer(User):
 
 # Movie class
 class Movie:
-    def __init__(self, title: str, description: str, durationMin: int, language: str, releaseDate: datetime, country: str, genre: str):
+    def __init__(self, title: str, description: str, durationMin: int, language: str, releaseDate: date, country: str, genre: str):
         self.__title = title
         self.__description = description
         self.__durationMin = durationMin

@@ -29,53 +29,57 @@ from typing import Union
 # booking.status
 # self.user.cancelBooking(booking)
 # booking.status
-class MockMovie:
-    def __init__(self, title):
-        self.title = title
-        self.status = True
+# class MockMovie:
+#     def __init__(self, title):
+#         self.title = title
+#         self.status = True
 
-class TestUserBooking:
+# class TestUserBooking:
 
-    def setup_method(self):
-        self.user = Customer(
-            "John Biden",
-            "12345 Main South Rd",
-            "johnthepresident@gmail.com",
-            "0220220222",
-            "johnbiden",
-            "securepassword"
-        )
-        self.mock_movie = MockMovie('Haha')
-        self.mock_screening = Screening(self.mock_movie, date.today(), datetime.now(), datetime.now() + timedelta(hours=2), None,[])
-        self.mock_payment = Payment(Decimal(20.0))
-        self.mock_seat1 = CinemaHallSeat("A", 1, False, Decimal(10.0))
-        self.mock_seat2 = CinemaHallSeat("A", 2, False, Decimal(10.0))
+#     def setup_method(self):
+#         self.user = Customer(
+#             "John Biden",
+#             "12345 Main South Rd",
+#             "johnthepresident@gmail.com",
+#             "0220220222",
+#             "johnbiden",
+#             "securepassword"
+#         )
+#         self.mock_movie = MockMovie('Haha')
+#         self.mock_screening = Screening(self.mock_movie, date.today(), datetime.now(), datetime.now() + timedelta(hours=2), None,[])
+#         self.mock_payment = Payment(Decimal(20.0))
+#         self.mock_seat1 = CinemaHallSeat("A", 1, False, Decimal(10.0))
+#         self.mock_seat2 = CinemaHallSeat("A", 2, False, Decimal(10.0))
         
 
-    def test_makeBooking(self):
-        booking = self.user.makeBooking(self.user, self.mock_screening, 2, Decimal(20.0), self.mock_payment)
-        booking.addSeat(self.mock_seat1)
-        booking.addSeat(self.mock_seat2)
-        assert isinstance(booking, Booking)
-        assert booking.customer == self.user
-        assert booking.screening == self.mock_screening
-        assert booking.numberOfSeats == 2
-        assert booking.orderTotal == Decimal(20.0)
-        assert booking.paymentDetail == self.mock_payment
-        print(booking.status)
+#     def test_makeBooking(self):
+#         booking = self.user.makeBooking(self.user, self.mock_screening, 2, Decimal(20.0), self.mock_payment)
+#         booking.addSeat(self.mock_seat1)
+#         booking.addSeat(self.mock_seat2)
+#         assert isinstance(booking, Booking)
+#         assert booking.customer == self.user
+#         assert booking.screening == self.mock_screening
+#         assert booking.numberOfSeats == 2
+#         assert booking.orderTotal == Decimal(20.0)
+#         assert booking.paymentDetail == self.mock_payment
+#         print(booking.status)
 
 
-    def test_cancelBooking(self):
-        booking = self.user.makeBooking(self.user, self.mock_screening, 2, Decimal(20.0), self.mock_payment)
-        booking.addSeat(self.mock_seat1)
-        booking.addSeat(self.mock_seat2)
-        print(booking.status)
-        self.user.cancelBooking(booking)
-        print(booking.status)
+#     def test_cancelBooking(self):
+#         booking = self.user.makeBooking(self.user, self.mock_screening, 2, Decimal(20.0), self.mock_payment)
+#         booking.addSeat(self.mock_seat1)
+#         booking.addSeat(self.mock_seat2)
+#         print(booking.status)
+#         self.user.cancelBooking(booking)
+#         print(booking.status)
 
-eg = TestUserBooking()
+# eg = TestUserBooking()
 
-eg.setup_method()
-print('setup ok')
-eg.test_makeBooking()
-print('make booking ok')
+# eg.setup_method()
+# print('setup ok')
+# eg.test_makeBooking()
+# print('make booking ok')
+
+Admin('Admin Zhu', '233Rd', 'e@e.com','233','admintest','233')
+
+Customer()

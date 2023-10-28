@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import date, datetime, timedelta
 from typing import Union
 
-
+import random
 
 class Cinema:
     """! The controller of the cinema management sys."""
@@ -20,9 +20,49 @@ class Cinema:
         self.allScreening = []
         self.publicMsg = []
         self.loggedin = 'Guest'
+        self.readFileStatus = None
 
         tempGuest = Guest()
         self.loggedUser = tempGuest
+        
+    def readFile(self):
+        try:
+            
+            if self.readFileStatus != True:
+
+                adminFile = open("AdminData.txt", "r")
+                for line in adminFile:
+                    data = line.strip()
+                    data = data.split(",")
+                    adminObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    self.allAdmin.append(adminObject)
+                
+                staffFile = open("StaffData.txt", "r")
+                for line in staffFile:
+                    data = line.strip()
+                    data = data.split(",")
+                    staffObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    self.allStaff.append(staffObject)
+
+                movieFile = open("MovieData.txt", "r")
+                for line in movieFile:
+                    data = line.strip()
+                    data = data.split(",")
+                    movieObject = Movie(data[0], data[1], int(data[2]), data[3], datetime.fromisoformat(data[4]).date(), data[5], data[6])
+                    self.allMovie.append(movieObject)
+                self.addScreening(self.allMovie[0], datetime.now() + timedelta(days=2), 'H2')
+                self.addScreening(self.allMovie[1], datetime.now() + timedelta(days=5), 'H1')
+                self.addScreening(self.allMovie[2], datetime.now() + timedelta(days=4), 'H3')
+            
+                self.readFileStatus = True
+                return {'Status': 'Done'}
+            
+            else:
+                return {'Status': 'Has read'}
+
+
+        except Exception as e:
+            return {'Status': 'Error'}
 
 
     def login(self, userName: str, psw: str, userType: str) -> str:

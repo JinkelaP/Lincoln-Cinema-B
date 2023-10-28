@@ -17,7 +17,7 @@ def indexPage():
             }
             movieList.append(movieInfo)
 
-    if lincolnCinema.loggedin == 'Guest':
+    if lincolnCinema.loggedin == None:
         return render_template('index.html',movieList=movieList)
     else:
         user = lincolnCinema.loggedUser

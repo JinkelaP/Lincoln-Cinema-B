@@ -19,7 +19,7 @@ class Cinema:
         self.allMovie = []
         self.allScreening = []
         self.publicMsg = []
-        self.loggedin = 'Guest'
+        self.loggedin = None
         self.readFileStatus = None
 
         tempGuest = Guest()
@@ -67,41 +67,41 @@ class Cinema:
 
     def login(self, userName: str, psw: str, userType: str) -> str:
 
-        msg = 'Incorrect username or password!'
+        msgFail = 404
         if userType == 'Customer':
             for i in self.allCustomer:
                 if i.username == userName:
                     if i.login(psw):
                         self.loggedin = 'Customer'
                         self.loggedUser = i
-                        return f'Welcome back, {i.name}!'
+                        return self.loggedUser.name
             else:
-                return msg
+                return msgFail
         elif userType == 'Staff':
             for i in self.allStaff:
                 if i.username == userName:
                     if i.login(psw):
                         self.loggedin = 'Staff'
                         self.loggedUser = i
-                        return f'Welcome back, {i.name}!'
+                        return self.loggedUser.name
             else:
-                return msg
+                return msgFail
         elif userType == 'Admin':
             for i in self.allAdmin:
                 if i.username == userName:
                     if i.login(psw):
                         self.loggedin = 'Admin'
                         self.loggedUser = i
-                        return f'Welcome back, {i.name}!'
+                        return self.loggedUser.name
             else:
-                return msg
+                return msgFail
 
 
     def register(self, name: str, address: str, email: str, phone: str, username: str, password: str) -> str:
         """! register function for the system. Can only register customer. No conficts allowed in username."""
         for i in self.allCustomer:
             if i.username == username:
-                return 'Registration failed. The username has been registered.'
+                return 'Conflict'
         newCustomer = self.loggedUser.register(name, address, email, phone, username, password)
         self.allCustomer.append(newCustomer)
         self.login(username, password)
@@ -111,7 +111,7 @@ class Cinema:
     def logout(self) -> str:
         tempGuest = Guest()
         self.loggedUser = tempGuest
-        self.loggedin = 'Guest'
+        self.loggedin = None
         return 'You have logged out!'
 
 

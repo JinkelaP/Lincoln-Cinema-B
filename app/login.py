@@ -26,3 +26,20 @@ def login():
     # Show the login form with message (if any)
     return render_template('login.html', msg=msg)
 
+@bp.route('/qc')
+def qCustomer():
+    loginReturn = lincolnCinema.login('haochenCustomer', 'password', 'Customer')
+    flash(f'Welcome back, {loginReturn}!', 'success')
+    return redirect("/")
+
+@bp.route('/qs')
+def qStaff():
+    loginReturn = lincolnCinema.login('haochenStaff', 'password', 'Staff')
+    flash(f'Welcome back, {loginReturn}!', 'success')
+    return redirect("/")
+
+@bp.route('/qa')
+def qAdmin():
+    loginReturn = lincolnCinema.login('haochenAdmin', 'password', 'Admin')
+    flash(f'Welcome back, {loginReturn}!', 'success')
+    return redirect("/")

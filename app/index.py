@@ -8,7 +8,7 @@ bp = Blueprint('index', __name__, )
 def realIndex():
     readFileReturn = lincolnCinema.readFileStatus
     if readFileReturn == True:
-        flash('You have read the files.','success')
+        # flash('You have read the files.','success')
         return redirect("/index")
     else:
         return render_template('firstOpen.html')

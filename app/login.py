@@ -7,6 +7,13 @@ bp = Blueprint('login', __name__, )
 def is_authenticated():
     return lincolnCinema.loggedin
 
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
+            }
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     msg = ''
@@ -21,6 +28,7 @@ def login():
             return render_template('login.html', msg='Incorrect username or password!', loginUsername=username)
         else:
             flash(f'Welcome back, {loginReturn}!', 'success')
+            session['accountInfo'] = getAccountInfo()
             return redirect("/")
 
     # Show the login form with message (if any)
@@ -30,16 +38,19 @@ def login():
 def qCustomer():
     loginReturn = lincolnCinema.login('haochenCustomer', 'password', 'Customer')
     flash(f'Welcome back, {loginReturn}!', 'success')
+    session['accountInfo'] = getAccountInfo()
     return redirect("/")
 
 @bp.route('/qs')
 def qStaff():
     loginReturn = lincolnCinema.login('haochenStaff', 'password', 'Staff')
     flash(f'Welcome back, {loginReturn}!', 'success')
+    session['accountInfo'] = getAccountInfo()
     return redirect("/")
 
 @bp.route('/qa')
 def qAdmin():
     loginReturn = lincolnCinema.login('haochenAdmin', 'password', 'Admin')
     flash(f'Welcome back, {loginReturn}!', 'success')
+    session['accountInfo'] = getAccountInfo()
     return redirect("/")

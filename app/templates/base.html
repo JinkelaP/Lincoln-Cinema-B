@@ -37,7 +37,7 @@
         
       </a>
       <a class="navbar-brand mb-0 h1 text-white" href="/"><strong></strong></a>
-      {% if accountInfo %}
+      {% if session['accountInfo'] %}
       <button class="btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNavigation"
         aria-controls="sidebarNavigation">
         <span class="navbar-toggler-icon"></span>
@@ -51,7 +51,7 @@
         </div>
         <div class="offcanvas-body">
           <!-- navigation links-->
-          {% if accountInfo.auth == 'Admin' %}
+          {% if session['accountInfo'].auth == 'Admin' %}
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
               <a class="nav-link text-white me-2" aria-current="page" href="/addScreening">Add Screening</a>
@@ -74,7 +74,7 @@
           {% else %}
 
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {% if accountInfo.auth == 'Customer' %}
+            {% if session['accountInfo'].auth == 'Customer' %}
             <li class="nav-item">
               <a class="nav-link text-white" href="/myBooking">My bookings</a>
             </li>
@@ -105,7 +105,7 @@
       <div class="dropdown text-end d-flex align-items-center d-none d-lg-block ps-3">
         <!-- <p class="username-text text-white my-2 mx-2">{{session['username']}}</p> -->
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown"
-          aria-expanded="false"> <span class="text-white">{{accountInfo.name}}</span>
+          aria-expanded="false"> <span class="text-white">{{session['accountInfo'].name}}</span>
           <img src="{{ url_for('static', filename='avatar.png') }}" alt="avatar"
             style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;" class="rounded-circle">
         </a>

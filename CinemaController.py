@@ -114,7 +114,7 @@ class Cinema:
                 return 'Conflict'
         newCustomer = self.loggedUser.register(name, address, email, phone, username, password)
         self.allCustomer.append(newCustomer)
-        self.login(username, password)
+        self.login(username, password,'Customer')
 
         return 'You have registered and loggedin!'
     

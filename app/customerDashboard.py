@@ -15,7 +15,8 @@ def is_authenticated():
 def getAccountInfo():
     return {
                 'name': lincolnCinema.loggedUser.name,
-                'auth': lincolnCinema.loggedin
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
             }
 
 @bp.route('/payment')

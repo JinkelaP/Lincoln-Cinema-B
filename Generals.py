@@ -164,6 +164,7 @@ class Customer(User):
 
 # Movie class
 class Movie:
+    nextID = 1000
     def __init__(self, title: str, description: str, durationMin: int, language: str, releaseDate: date, country: str, genre: str):
         self.__title = title
         self.__description = description
@@ -174,6 +175,12 @@ class Movie:
         self.__genre = genre
         self.__screeningList: List[Screening] = []
         self.__status = True
+        self.__movieID = Movie.nextID
+        Movie.nextID += 1
+
+    @property
+    def movieID(self):
+        return self.__movieID
 
     @property
     def title(self):
@@ -218,6 +225,7 @@ class Movie:
 
 # Screening class
 class Screening:
+    nextID = 10000
     def __init__(self, movie: Movie, screeningDate: date, startTime: datetime, endTime: datetime, hall: 'CinemaHall', hallSeat: List['CinemaHallSeat']):
         self.__movie = movie
         self.__screeningDate = screeningDate
@@ -226,6 +234,12 @@ class Screening:
         self.__cinemaHall: CinemaHall = None
         self.__seats: List[CinemaHallSeat] = []
         self.__status = True
+        self.__screeningID = Screening.nextID
+        Screening.nextID += 1
+
+    @property
+    def screeningID(self):
+        return self.__screeningID
 
     @property
     def movie(self):
@@ -269,7 +283,7 @@ class Booking:
 
     def __init__(self, customer: Customer, screening: Screening, status: bool, numberOfSeats: int, orderTotal: Decimal, paymentDetail: 'Payment'):
 
-        self.__bookingNum = Booking.nextID
+        self.__bookingID = Booking.nextID
         self.__customer = customer
         self.__screening = screening
         self.__numberOfSeats = numberOfSeats
@@ -281,8 +295,8 @@ class Booking:
         Booking.nextID += 1
 
     @property
-    def bookingNum(self):
-        return self.__bookingNum
+    def bookingID(self):
+        return self.__bookingID
 
     @property
     def customer(self):
@@ -381,6 +395,7 @@ class CinemaHallSeat:
     def __init__(self, col: str, row: int, isReserved: bool, seatPrice: Decimal):
         self.__col = col
         self.__row = row
+        self.__seatPlace = f'{col}{row}'
         self.__isReserved = isReserved
         self.__seatPrice = seatPrice
         self.__userID = None
@@ -392,6 +407,10 @@ class CinemaHallSeat:
     @property
     def row(self):
         return self.__row
+    
+    @property
+    def seatPlace(self):
+        return self.__seatPlace
 
     @property
     def isReserved(self):
@@ -416,9 +435,16 @@ class CinemaHallSeat:
 
 # Abstract Payment class
 class Payment(ABC):
+    nextID = 10000
     def __init__(self, amount: float):
         self._amount = amount
         self._date = datetime.now()
+        self._paymentID = Payment.nextID
+        Payment.nextID += 1
+
+    @property
+    def paymentID(self):
+        return self._paymentID
 
     @property
     def amount(self):

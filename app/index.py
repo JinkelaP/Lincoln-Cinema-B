@@ -8,7 +8,8 @@ bp = Blueprint('index', __name__, )
 def getAccountInfo():
     return {
                 'name': lincolnCinema.loggedUser.name,
-                'auth': lincolnCinema.loggedin
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
             }
 
 
@@ -19,6 +20,7 @@ def realIndex():
         # flash('You have read the files.','success')
         return redirect("/index")
     else:
+        session.pop('accountInfo', None)
         return render_template('firstOpen.html')
 
 
@@ -53,7 +55,8 @@ def indexPage():
                     'releaseDate': i.releaseDate,
                     'durationMin': i.durationMin,
                     'country': i.country,
-                    'genre':i.genre
+                    'genre':i.genre,
+                    'id': i.movieID
                 }
                 movieList.append(movieInfo)
 

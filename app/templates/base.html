@@ -54,10 +54,10 @@
           {% if accountInfo.auth == 'Admin' %}
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link text-white me-2" aria-current="page" href="/">Add Screening</a>
+              <a class="nav-link text-white me-2" aria-current="page" href="/addScreening">Add Screening</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-white" aria-current="page" href="/hqAdmin/reports">Add Movie</a>
+              <a class="nav-link text-white" aria-current="page" href="/addMovies">Add Movie</a>
             </li>
             <li class="nav-item">
               <a class="nav-link text-white" aria-current="page" href="/">News</a>
@@ -76,7 +76,7 @@
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             {% if accountInfo.auth == 'Customer' %}
             <li class="nav-item">
-              <a class="nav-link text-white" href="/customer/myOrder">My bookings</a>
+              <a class="nav-link text-white" href="/myBooking">My bookings</a>
             </li>
             {% endif %}
             <hr />
@@ -85,8 +85,8 @@
               <a class="nav-link text-white" href="{{url_for('customerDashboard.customerProfile')}}">Profile</a>
 
             </li>
-            <li class="nav-item d-lg-none">
-              <a class="nav-link text-white" href="#">News/Updates</a>
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/customer/msg">News/Updates</a>
             </li>
             <hr />
             <li class="nav-item d-lg-none">
@@ -113,16 +113,9 @@
           style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 34px);">
 
           <li>
-            {% if accountInfo.auth == 'Admin' %}
             <a class="dropdown-item" href="{{url_for('customerDashboard.customerProfile')}}">Profile</a>
-            {% else %}
-            <a class="dropdown-item" href="{{url_for('customerDashboard.customerProfile')}}">Profile</a>
-            {% endif %}
           </li>
 
-          {% if accountInfo.auth == 'Customer' %}
-          <li><a class="dropdown-item" href="/customer/myOrder">Orders</a></li>
-          {% endif %}
           <li>
             <hr class="dropdown-divider">
           </li>

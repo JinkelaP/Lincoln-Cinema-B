@@ -4,6 +4,14 @@ from globalController import lincolnCinema
 
 bp = Blueprint('index', __name__, )
 
+
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin
+            }
+
+
 @bp.route('/')
 def realIndex():
     readFileReturn = lincolnCinema.readFileStatus

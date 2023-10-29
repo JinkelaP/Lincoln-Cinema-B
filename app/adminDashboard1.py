@@ -13,86 +13,10 @@ def is_authenticated():
     return lincolnCinema.loggedin
 
 
-@bp.route('/hqAdmin/home')
-def adminDashboard1():
-    if not 'loggedin' in session or session['role'] != 'HQ_Admin':
-        return redirect(url_for('login.login'))
-    
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Fetch branches from the database
-    cursor.execute('SELECT * FROM branches WHERE branchActive = TRUE;')
-    branches = cursor.fetchall()
 
 
-    # Fetch additional information for each branch. 
-    for branch in branches:
-        cursor.execute('SELECT * FROM pizzas WHERE branchID = %s AND pizzaActive = TRUE', (branch['branchID'],))
-        branch['specialty_pizzas'] = cursor.fetchall()
-        
-        cursor.execute('SELECT * FROM sideOfferings WHERE branchID = %s AND sideOfferingActive = TRUE', (branch['branchID'],))
-        branch['specialty_sides'] = cursor.fetchall()
-        
-        cursor.execute('SELECT * FROM drinks WHERE branchID = %s AND drinkActive = TRUE', (branch['branchID'],))
-        branch['specialty_drinks'] = cursor.fetchall()
-
-        cursor.execute('SELECT * FROM AdminInfo WHERE userID = %s;', (branch['branchAdminID'],))
-        branch['branchAdminInfo'] = cursor.fetchone()
-
-        cursor.execute('SELECT * FROM simplePromotions WHERE branchID = %s AND sPromoActive = TRUE', (branch['branchID'],))
-        branch['simplePromo'] = cursor.fetchall()
-
-        cursor.execute('SELECT * FROM comboPromotions WHERE branchID = %s AND cPromoActive = TRUE', (branch['branchID'],))
-        branch['comboPromo'] = cursor.fetchall()
-
-        cursor.execute('SELECT * FROM orders WHERE branchID = %s AND orderActive = TRUE', (branch['branchID'],))
-        totalAmountOrders = cursor.fetchall()
-
-        cursor.execute('SELECT orderDate, totalAmount FROM orders WHERE branchID = %s AND orderDate BETWEEN NOW() - INTERVAL 30 DAY AND NOW() ORDER BY orderDate DESC;', (branch['branchID'],))
-        orders30Days = cursor.fetchall()
-
-        totalAmount = 0
-        totalCustomer = 0
-        customerIDTemp = 0
-        for i in totalAmountOrders:
-            totalAmount += i['totalAmount']
-            if i['customerID'] != customerIDTemp:
-                totalCustomer += 1
-                customerIDTemp = i['customerID']
-
-        cursor.execute('SELECT od.productID, COUNT(od.productID) as count FROM orderDetails od\
-        JOIN orders o ON od.orderID = o.orderID\
-        WHERE o.branchID = %s AND o.orderDate BETWEEN NOW() - INTERVAL 30 DAY AND NOW()\
-        GROUP BY od.productID ORDER BY count DESC', (branch['branchID'],))
-        topProducts = cursor.fetchall()
-
-        for i in topProducts:
-            if i['productID'] < 200:
-                cursor.execute("SELECT * FROM pizzas WHERE pizzaID = %s;", (i['productID'],))
-                productName = cursor.fetchone()
-                i['productID'] = productName['pizzaName']
-
-            elif i['productID'] < 300:
-                cursor.execute("SELECT * FROM sideOfferings WHERE sideOfferingID = %s;", (i['productID'],))
-                productName = cursor.fetchone()
-                i['productID'] = productName['offeringName']
-
-            else:
-                cursor.execute("SELECT * FROM drinks WHERE drinkID = %s;", (i['productID'],))
-                productName = cursor.fetchone()
-                i['productID'] = productName['drinkName']
-        
-        branch['totalAmounts'] = totalAmount
-        branch['orderAmounts'] = len(totalAmountOrders)
-        branch['totalCustomer'] = customerIDTemp
-        branch['orders30Days'] = orders30Days
-        branch['topProducts'] = topProducts
-
-    return render_template('adminDashboard1.html', branches=branches)
-
-
-@bp.route('/nationalProducts', methods=['GET'])
-def nationalProducts():
+@bp.route('/addMovies', methods=['GET'])
+def addMovies():
     if 'loggedin' in session and session['role'] == 'HQ_Admin':
         
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

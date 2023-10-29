@@ -12,6 +12,11 @@ def is_authenticated():
     return lincolnCinema.loggedin
 
 
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin
+            }
 
 @bp.route('/payment')
 def payment():
@@ -56,10 +61,14 @@ def myOrder():
 
 @bp.route('/customer/msg', methods=['GET'])
 def msg():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-    cursor.execute('SELECT * FROM notifications WHERE customerID = %s',(getCustomerID(session['id']),))
-    allMsg = cursor.fetchall()
-    return render_template('displayMsg.html', allMsg = reversed(allMsg))
+    allMsg = []
+    notiList = lincolnCinema.loggedUser.notiList
+    for i in notiList:
+        noti = {
+            'content': i.content,
+            'time':i.date
+        }
+    return render_template('displayMsg.html', allMsg = reversed(allMsg),accountInfo = getAccountInfo())
 
 @bp.route('/profile')
 def customerProfile():    
@@ -74,7 +83,7 @@ def customerProfile():
             'phoneNumber': user.phone,
             'Address': user.address
         } 
-        return render_template('customerProfile.html', customerInfo=customerInfo)
+        return render_template('customerProfile.html', customerInfo=customerInfo, accountInfo=getAccountInfo())
 
     else:
         return redirect(url_for('login.login'))    

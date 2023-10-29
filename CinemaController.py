@@ -37,6 +37,13 @@ class Cinema:
                     adminObject = Admin(data[0], data[1], data[2], data[3], data[4], data[5])
                     self.allAdmin.append(adminObject)
                 
+                adminFile = open("CustomerData.txt", "r")
+                for line in adminFile:
+                    data = line.strip()
+                    data = data.split(",")
+                    cObject = Customer(data[0], data[1], data[2], data[3], data[4], data[5])
+                    self.allCustomer.append(cObject)
+                
                 staffFile = open("StaffData.txt", "r")
                 for line in staffFile:
                     data = line.strip()

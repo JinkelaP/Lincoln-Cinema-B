@@ -1,5 +1,5 @@
 from flask import flash, render_template, request, redirect, url_for, session, Blueprint
-
+from datetime import date, time, datetime
 from globalController import lincolnCinema
 
 bp = Blueprint('index', __name__, )
@@ -95,6 +95,69 @@ def indexPage():
     else:
         return redirect('/')
     
-@bp.route("/search", methods=['GET'])
+@bp.route("/search", methods=['GET','POST'])
 def movieSearch():
-    pass
+    searchInput = request.args.get('searchinput')
+    searchInputDate = request.form.get('searchinputDate')
+    if searchInputDate:
+        searchMovieByDateAfter = lincolnCinema.searchMovieByDateAfter(datetime.strptime(searchInputDate, '%Y-%m-%d').date())
+        if searchMovieByDateAfter:
+            movieList = []
+            for i in searchMovieByDateAfter:
+                movieInfo = {
+                'title': i.title,
+                'description': i.description,
+                'language': i.language,
+                'releaseDate': i.releaseDate,
+                'durationMin': i.durationMin,
+                'country': i.country,
+                'genre':i.genre,
+                'id': i.movieID,
+                'status':i.status,
+            }
+                movieList.append(movieInfo)
+            return render_template('index.html',movieList=movieList)
+    elif searchInput:
+        searchMovieByStrReturn = lincolnCinema.searchMovieByStr(searchInput)
+        if searchMovieByStrReturn:
+            movieList = []
+            for i in searchMovieByStrReturn:
+                movieInfo = {
+                'title': i.title,
+                'description': i.description,
+                'language': i.language,
+                'releaseDate': i.releaseDate,
+                'durationMin': i.durationMin,
+                'country': i.country,
+                'genre':i.genre,
+                'id': i.movieID,
+                'status':i.status,
+            }
+                movieList.append(movieInfo)
+            return render_template('index.html',movieList=movieList)
+        else:
+            flash('No result found!','success')
+            return redirect('/')
+    elif searchInputDate:
+        searchMovieByDateAfter = lincolnCinema.searchMovieByDateAfter(datetime.strptime(searchInputDate, '%Y-%m-%d').date())
+        if searchMovieByDateAfter:
+            movieList = []
+            for i in searchMovieByStrReturn:
+                movieInfo = {
+                'title': i.title,
+                'description': i.description,
+                'language': i.language,
+                'releaseDate': i.releaseDate,
+                'durationMin': i.durationMin,
+                'country': i.country,
+                'genre':i.genre,
+                'id': i.movieID,
+                'status':i.status,
+            }
+                movieList.append(movieInfo)
+            return render_template('index.html',movieList=movieList)
+        else:
+            flash('No result found!','success')
+            return redirect('/')
+
+    return redirect('/')

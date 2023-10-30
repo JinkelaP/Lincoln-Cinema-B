@@ -12,6 +12,19 @@
     <h1 class="display-5 lead text-center">Movies in theaters</h1>
     <div class="container">
 
+
+      <form class="d-flex my-4 px-3 col-md-6" role="search" action="/search" method="GET">
+        <input class="form-control me-2" type="search" name="searchinput" placeholder="Search title, genre, etc..." aria-label="Search">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+
+    <form class="d-flex my-3 px-3 col-md-6" role="search" action="/search" method="POST">
+      <input class="form-control me-2" type="date" name="searchinputDate" placeholder="Search date" aria-label="Search">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+  </form>
+
+
+
       {% if movieList %}
       <div class="row">
         {% for i in movieList %}

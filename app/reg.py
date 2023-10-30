@@ -4,6 +4,13 @@ import re
 
 bp = Blueprint('reg', __name__)
 
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
+            }
+
 @bp.route("/register", methods = ['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -21,6 +28,7 @@ def register():
             return render_template('register.html')
         else:
             flash('Registration succeeded! You have been logged in!', 'success')
-            return redirect(url_for('/'))
+            session['accountInfo'] = getAccountInfo()
+            return redirect('/')
 
     return render_template('register.html')

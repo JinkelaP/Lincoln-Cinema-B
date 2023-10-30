@@ -8,7 +8,7 @@ bp = Blueprint('logout', __name__, )
 def logout():
     #Log out through controller
     logoutReturn = lincolnCinema.logout()
-
+    session.pop('accountInfo', None)
     flash( logoutReturn , 'success'), 
     # Redirect to login page
     return redirect('/')

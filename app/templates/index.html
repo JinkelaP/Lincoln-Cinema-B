@@ -1,123 +1,59 @@
 {% extends 'base.html' %}
 
-{% block title %}Welcome to Slice of Asia{% endblock %}
+{% block title %}Lincoln Cinema{% endblock %}
 
 {% block content %}
-<!-- Login Form -->
-<main>
-  <div class="">
-    <div id="myCarousel" class="carousel slide mb-6" data-bs-ride="carousel">
-      <div class="carousel-indicators">
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2" class="active"
-          aria-current="true"></button>
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2" aria-label="Slide 3" class=""></button>
+
+
+<div class="">
+
+
+  <div class="container mt-5">
+    <h1 class="display-5 lead text-center">Movies in theaters</h1>
+    <div class="container">
+
+
+      <form class="d-flex my-4 px-3 col-md-6" role="search" action="/search" method="GET">
+        <input class="form-control me-2" type="search" name="searchinput" placeholder="Search title, genre, etc..." aria-label="Search">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+
+    <form class="d-flex my-3 px-3 col-md-6" role="search" action="/search" method="POST">
+      <input class="form-control me-2" type="date" name="searchinputDate" placeholder="Search date" aria-label="Search">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+  </form>
+
+
+
+      {% if movieList %}
+      <div class="row">
+        {% for i in movieList %}
+        {% if i.status %}
+      <div class="col-md-4">
+        
+        <div class="card mx-2 my-2">
+          <img src="{{ url_for('static', filename='movieCover.jpg') }}" class="card-img-top" alt="carphoto">
+
+          <div class="card-body">
+            <h5 class="card-title"><strong>{{i.title}}</strong></h5>
+            <p class="card-text">{{i.description}}</p>
+            <a href="/chooseScreening/{{i.id}}" class="btn btn-primary" 
+              >Buy tickets now!</a>
+
+          </div>
+        </div>
+        
       </div>
-      <div class="carousel-inner">
-        <div class="carousel-item ">
-          <img src="{{ url_for('static', filename='index/banner1.png') }}" alt="bannerPic1" height=""
-            class="mx-auto d-block img-fluid">
-          <div class="position-absolute top-0 start-0 bottom-0 end-0 bg-black opacity-25"></div>
-          <div class="container">
-            <div class="carousel-caption text-start">
-              <h1 class="text-shadow-blurred">Best Pizza.</h1>
-              <p class="opacity-75 text-shadow-blurred">The best asian-fusion pizza is here!</p>
-              <p><a class="btn btn-lg btn-danger shadow" href="/register">Sign up today</a></p>
-            </div>
-          </div>
-        </div>
-        <div class="carousel-item active">
-          <img src="{{ url_for('static', filename='index/banner3.png') }}" alt="bannerPic3" height=""
-            class="mx-auto d-block img-fluid">
-          <div class="position-absolute top-0 start-0 bottom-0 end-0 bg-black opacity-25"></div>
-          <div class="container">
-            <div class="carousel-caption">
-              <h1 class="text-shadow-blurred">Best Experience.</h1>
-              <p class="text-shadow-blurred">The best online ordering experience at Slice of Asia!</p>
-              <p><a class="btn btn-lg btn-warning shadow" href="/menu">Order now</a></p>
-            </div>
-          </div>
-        </div>
-        <div class="carousel-item">
-          <img src="{{ url_for('static', filename='index/banner2.png') }}" alt="bannerPic2" height=""
-            class="mx-auto d-block img-fluid">
-          <div class="position-absolute top-0 start-0 bottom-0 end-0 bg-black opacity-25"></div>
-          <div class="container">
-            <div class="carousel-caption text-end">
-              <h1 class="text-shadow-blurred">Best chickens.</h1>
-              <p class="text-shadow-blurred">Brought by our chef mastering on authentic asian food.</p>
-              <p><a class="btn btn-lg btn-danger shadow" href="/menu">Browse menu</a></p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
-      </button>
+      {%endif%}
+      {%endfor%}
+    </div>
+      {%endif%}
+
     </div>
 
 
-    <!-- Marketing messaging and featurettes
-  ================================================== -->
-    <!-- Wrap the rest of the page in another container to center all the content. -->
-
-    <div class="container mt-5">
-
-      <!-- Three columns of text below the carousel -->
-      <div class="row">
-        <div class="col-lg-4">
-
-            <img src="{{ url_for('static', filename='index/s1.png') }}" class="rounded-circle" alt="Pizza">
-
-          <h2 class="fw-normal">Pizza</h2>
-          <p>Good fusion pizza that you can never find in other restaurant. New tastes for explorers, like you!</p>
-          <p><a class="btn btn-warning" href="#">View details »</a></p>
-        </div>
-        <div class="col-lg-4">
-          <img src="{{ url_for('static', filename='index/s2.png') }}" class="rounded-circle" alt="Pizza">
-          <h2 class="fw-normal">Chickens</h2>
-          <p>Authentic fried chickens from China and Japan.
-          </p>
-          <p><a class="btn btn-warning" href="#">View details »</a></p>
-        </div>
-        <div class="col-lg-4">
-          <img src="{{ url_for('static', filename='index/s3.png') }}" class="rounded-circle" alt="Pizza">
-          <h2 class="fw-normal">Noodle Soup</h2>
-          <p>Mixing noodle soup with Italian materials, you will find the taste of a new world.</p>
-          <p><a class="btn btn-warning" href="#">View details »</a></p>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- START THE FEATURETTES -->
-    <div class="container mt-5">
-      <hr class="my-4">
-
-      <div class="row">
-        <div class="col-md-7">
-          <h1 class="">New pizza and family pack released! <span class="text-body-secondary">It will blow
-              your mind.</span></h1>
-          <p class="lead">Our professinal food researcher has released a new dining set that fulfill the need of your
-            family!</p>
-        </div>
-        <div class="col-md-5">
-          <img src="{{ url_for('static', filename='index/b1.jpg') }}" class="img-fluid" alt="Description">
-
-        </div>
-      </div>
-
-      <hr class="my-4">
-
-      <!-- /END THE FEATURETTES -->
-
-    </div><!-- /.container -->
   </div>
-</main>
+</div>
+
 
 {% endblock %}

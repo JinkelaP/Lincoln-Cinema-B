@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}My bookings{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4 col-lg-10">
+    <h1 class="display-5 lead text-center">My bookings</h1>
+  
+    <!-- Display each news item -->
+    {% for i in allBookingList %}
+
+    <div class="container my-5 col-md-6 col-sm-12">
+
+        <div class="card my-5">
+            <div class="card-header">
+                <h3><strong>#{{ i.bookingID }}</strong></h3><small>Created On: {{ i.createdOn.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="m-0"><strong>Movie: </strong>{{i.movie.title}}</p>
+                        <p class="m-0"><strong>Play on: </strong>{{i.screening.screeningDate.strftime('%Y-%m-%d')}} {{i.screening.startTime.strftime('%H:%M:%S')}}</p>
+                        <p class="m-0"><strong>Duration: </strong>{{i.movie.durationMin}} min</p>
+                        <p class="m-0"><strong>Seats: </strong>{%for i in i.seats%} {{i}}, {%endfor%}</p>
+                        <hr class="my-2">
+                        <p class="m-0"><strong>Payment: </strong>{{i.paymentDetail}} NZD</p>
+                        <p class="m-0"><strong>Status: </strong>{{ 'Valid' if i.status else 'Invalid' }}</p>
+                        <hr class="my-2">
+                        {% if i.status %}
+                        <a type="button" class="btn btn-sm btn-dark" href="/cancelBooking/{{i.bookingID}}">Cancel the booking</a>
+                        <hr class="my-2">
+                        {%endif%}
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -27,6 +27,13 @@
                 <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
                 <small class="form-text text-muted">Required field</small>
               </div>
+
+              <select class="form-select my-1" name="userType" required>
+                <option value="Customer">Customer</option>
+                <option value="Staff">FrontDeskStaff</option>
+                <option value="Admin">Admin</option>
+              </select>
+
               <button type="submit" class="btn btn-primary btn-block">Login</button>
             </form>
             <p class="text-center mt-3">Don't have an account? <a href="{{url_for('reg.register')}}">Register here</a></p>

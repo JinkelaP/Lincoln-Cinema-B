@@ -34,14 +34,21 @@ class Cinema:
                 for line in adminFile:
                     data = line.strip()
                     data = data.split(",")
-                    adminObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    adminObject = Admin(data[0], data[1], data[2], data[3], data[4], data[5])
                     self.allAdmin.append(adminObject)
+                
+                adminFile = open("CustomerData.txt", "r")
+                for line in adminFile:
+                    data = line.strip()
+                    data = data.split(",")
+                    cObject = Customer(data[0], data[1], data[2], data[3], data[4], data[5])
+                    self.allCustomer.append(cObject)
                 
                 staffFile = open("StaffData.txt", "r")
                 for line in staffFile:
                     data = line.strip()
                     data = data.split(",")
-                    staffObject = (data[0], data[1], data[2], data[3], data[4], data[5])
+                    staffObject = FrontDeskStaff(data[0], data[1], data[2], data[3], data[4], data[5])
                     self.allStaff.append(staffObject)
 
                 movieFile = open("MovieData.txt", "r")
@@ -50,19 +57,22 @@ class Cinema:
                     data = data.split(",")
                     movieObject = Movie(data[0], data[1], int(data[2]), data[3], datetime.fromisoformat(data[4]).date(), data[5], data[6])
                     self.allMovie.append(movieObject)
+
+                self.loggedUser = self.allAdmin[0]
                 self.addScreening(self.allMovie[0], datetime.now() + timedelta(days=2), 'H2')
                 self.addScreening(self.allMovie[1], datetime.now() + timedelta(days=5), 'H1')
                 self.addScreening(self.allMovie[2], datetime.now() + timedelta(days=4), 'H3')
-            
+
+                self.loggedUser = Guest()
                 self.readFileStatus = True
-                return {'Status': 'Done'}
+                return {'status': 'Done'}
             
             else:
-                return {'Status': 'Has read'}
+                return {'status': 'Has read'}
 
 
         except Exception as e:
-            return {'Status': 'Error'}
+            return {'status': e}
 
 
     def login(self, userName: str, psw: str, userType: str) -> str:
@@ -104,7 +114,7 @@ class Cinema:
                 return 'Conflict'
         newCustomer = self.loggedUser.register(name, address, email, phone, username, password)
         self.allCustomer.append(newCustomer)
-        self.login(username, password)
+        self.login(username, password,'Customer')
 
         return 'You have registered and loggedin!'
     
@@ -158,7 +168,7 @@ class Cinema:
         return screening.seats
 
     def makeBooking(self, screening: Screening, user: Customer, numberOfSeats: int, seats: list, payment: dict, price: Decimal, coupon: Coupon = None) -> str:
-        # payment = {paymentType: str, cardNumber: str, cardHolder: str, expiryDate: date}
+        # payment = {paymentType: str, cardNumber: str, cardHolder: str, expiryDate: date, cvv: str}
         
         """! Make a booking, creating the ticket"""
 
@@ -171,16 +181,17 @@ class Cinema:
                 return 'Invalid Coupon'
 
         if payment['paymentType'] == 'credit':
-            paymentNew = CreditCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+            paymentNew = CreditCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'], payment['cvv'])
         elif payment['paymentType'] == 'debit':
-            paymentNew = DebitCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+            paymentNew = DebitCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'], payment['cvv'])
         else:
             paymentNew = Cash(price)
 
         newBooking = self.loggedUser.makeBooking(user, screening, numberOfSeats, price, paymentNew)
 
         for i in seats:
-            i.isReserved = False
+            i.isReserved = True
+            i.userID = user.userID
             newBooking.addSeat(i)
 
         user.addBookings(newBooking)
@@ -192,7 +203,7 @@ class Cinema:
         """! deactivate a ticket"""
         self.loggedUser.cancelBooking(ticket)
 
-        msg = f'You have successfully cancelled the tickets!'
+        msg = f'You have successfully cancelled the ticket!'
         user.addNoti(Notification(user, msg))
         return msg
 
@@ -210,9 +221,10 @@ class Cinema:
         # validate datetime conflicts, generate seats
         dateTEnd = dateT + timedelta(minutes=movie.durationMin)
         for i in self.allScreening:
-            if dateT < i.endTime and dateTEnd > i.startTime:
-                if i.CinemaHall.name == hallName:
-                    return 'Creat screening failed. Time Conflicts detected.'
+            if i.status == True:
+                if dateT < i.endTime and dateTEnd > i.startTime:
+                    if i.cinemaHall.name == hallName:
+                        return 'Creat screening failed. Time Conflicts detected.'
         else:
             for i in self.allHall:
                 if i.name == hallName:
@@ -221,20 +233,20 @@ class Cinema:
                     
                     return 'Creat screening success.'
     
-    def hallSeatCreate(hall: CinemaHall, priceTicket) -> list:
+    def hallSeatCreate(self, theHall: CinemaHall) -> list:
         """!@brief create seats in the screening hall"""
         maxRow = 15
         nowRow = 1
         nowCol = 'A'
 
         result = []
-        for i in range(hall.totalSeats):
+        for i in range(theHall.totalSeats):
             if nowRow <= maxRow:
-                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, 30))
             else:
                 nowRow = 1
                 nowCol = chr(ord(nowCol) + 1)
-                result.append(CinemaHallSeat(nowCol, nowRow, False, priceTicket))
+                result.append(CinemaHallSeat(nowCol, nowRow, False, 30))
             nowRow += 1
 
         return result
@@ -261,13 +273,12 @@ class Cinema:
             if type(a.userID) == int:
                 for user in self.allCustomer:
                     if user.userID == a.userID:
-                        user.addNoti(user, f'The screening your booked on {screening.screeningDate.strftime("%d-%m-%Y")} has been cancelled.')
+                        user.addNoti(Notification(user, f'The screening seat {a.seatPlace} your booked on {screening.screeningDate.strftime("%d-%m-%Y")} has been cancelled.'))
                         for ticket in user.bookingList:
                             if ticket.screening == screening:
                                 ticket.status = False
 
         return 'Screening cancelled. Customers has been notified.'
-
 
     def sendPublicMsg(self, msg: str) -> str:
 

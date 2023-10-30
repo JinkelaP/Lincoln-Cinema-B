@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Before Open{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4 col-lg-10">
+    <h1 class="display-5 lead text-center">Welcome to Lincoln Cinema App!</h1>
+
+    <!-- Display each news item -->
+    <div class="container my-5 col-md-6 col-sm-10">
+
+        <p>Press the button to read local txt files that creates models.</p>
+        <p>Warning: Since the app does not have database function, all data will lose from memory once turned off.
+             If you are using flask run, <strong>Do not change codes when running the app!</strong></p>
+        <a href="/readFile" class="btn btn-primary">Read file</a>
+
+        
+    </div>
+</div>
+{% endblock %}

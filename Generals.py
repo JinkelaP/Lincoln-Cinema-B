@@ -92,6 +92,10 @@ class User(Person, ABC):  # inherit
     @property
     def userPassword(self):
         return self._userPassword
+    
+    @property
+    def userID(self):
+        return self._userID
 
     @userPassword.setter
     def userPassword(self, newPassword):
@@ -124,6 +128,7 @@ class Admin(User):
     def addScreening(self, movie, date, dateT, dateTEnd, cinemaHall, hallSeat, allScreening) -> bool:
         newScreening = Screening(movie, date, dateT, dateTEnd, cinemaHall, hallSeat)
         allScreening.append(newScreening)
+        movie.addScreening(newScreening)
         return newScreening
 
     def cancelMovie(self, movie) -> None:
@@ -164,6 +169,7 @@ class Customer(User):
 
 # Movie class
 class Movie:
+    nextID = 1000
     def __init__(self, title: str, description: str, durationMin: int, language: str, releaseDate: date, country: str, genre: str):
         self.__title = title
         self.__description = description
@@ -174,6 +180,12 @@ class Movie:
         self.__genre = genre
         self.__screeningList: List[Screening] = []
         self.__status = True
+        self.__movieID = Movie.nextID
+        Movie.nextID += 1
+
+    @property
+    def movieID(self):
+        return self.__movieID
 
     @property
     def title(self):
@@ -214,18 +226,28 @@ class Movie:
     @property
     def screeningList(self):
         return self.__screeningList
+    
+    def addScreening(self, screening: 'Screening'):
+        self.__screeningList.append(screening)
 
 
 # Screening class
 class Screening:
+    nextID = 10000
     def __init__(self, movie: Movie, screeningDate: date, startTime: datetime, endTime: datetime, hall: 'CinemaHall', hallSeat: List['CinemaHallSeat']):
         self.__movie = movie
         self.__screeningDate = screeningDate
         self.__startTime = startTime
         self.__endTime = endTime
-        self.__cinemaHall: CinemaHall = None
-        self.__seats: List[CinemaHallSeat] = []
+        self.__cinemaHall: CinemaHall = hall
+        self.__seats: List[CinemaHallSeat] = hallSeat
         self.__status = True
+        self.__screeningID = Screening.nextID
+        Screening.nextID += 1
+
+    @property
+    def screeningID(self):
+        return self.__screeningID
 
     @property
     def movie(self):
@@ -269,7 +291,7 @@ class Booking:
 
     def __init__(self, customer: Customer, screening: Screening, status: bool, numberOfSeats: int, orderTotal: Decimal, paymentDetail: 'Payment'):
 
-        self.__bookingNum = Booking.nextID
+        self.__bookingID = Booking.nextID
         self.__customer = customer
         self.__screening = screening
         self.__numberOfSeats = numberOfSeats
@@ -281,8 +303,8 @@ class Booking:
         Booking.nextID += 1
 
     @property
-    def bookingNum(self):
-        return self.__bookingNum
+    def bookingID(self):
+        return self.__bookingID
 
     @property
     def customer(self):
@@ -381,6 +403,7 @@ class CinemaHallSeat:
     def __init__(self, col: str, row: int, isReserved: bool, seatPrice: Decimal):
         self.__col = col
         self.__row = row
+        self.__seatPlace = f'{col}{row}'
         self.__isReserved = isReserved
         self.__seatPrice = seatPrice
         self.__userID = None
@@ -392,6 +415,10 @@ class CinemaHallSeat:
     @property
     def row(self):
         return self.__row
+    
+    @property
+    def seatPlace(self):
+        return self.__seatPlace
 
     @property
     def isReserved(self):
@@ -416,9 +443,16 @@ class CinemaHallSeat:
 
 # Abstract Payment class
 class Payment(ABC):
+    nextID = 10000
     def __init__(self, amount: float):
         self._amount = amount
         self._date = datetime.now()
+        self._paymentID = Payment.nextID
+        Payment.nextID += 1
+
+    @property
+    def paymentID(self):
+        return self._paymentID
 
     @property
     def amount(self):
@@ -455,10 +489,12 @@ class Coupon:
 
 
 class DebitCard(Payment):
-    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str):
+    def __init__(self, amount: int, cardNumber: str, cardHolder: str, expiryDate: str, cvv: str):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
+        self.__expiryDate = expiryDate
+        self.__cvv = cvv
 
     @property
     def cardNumber(self):
@@ -467,17 +503,26 @@ class DebitCard(Payment):
     @property
     def cardHolder(self):
         return self.__cardHolder
+    
+    @property
+    def expiryDate(self):
+        return self.__expiryDate
+    
+    @property
+    def cvv(self):
+        return self.__cvv
 
 
 # CreditCard class
 
 
 class CreditCard(Payment):
-    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str, expiryDate: date):
+    def __init__(self, amount: int, cardNumber: str, cardHolder: str, expiryDate: str, cvv: str):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
         self.__expiryDate = expiryDate
+        self.__cvv = cvv
 
     @property
     def cardNumber(self):
@@ -490,6 +535,10 @@ class CreditCard(Payment):
     @property
     def expiryDate(self):
         return self.__expiryDate
+    
+    @property
+    def cvv(self):
+        return self.__cvv
 
 
 # Cash class

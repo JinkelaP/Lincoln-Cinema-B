@@ -1,4 +1,4 @@
-from app import mysql
+
 from flask import flash, render_template, request, redirect, url_for, session, Blueprint, jsonify
 import json
 import os
@@ -12,208 +12,314 @@ def is_authenticated():
     return lincolnCinema.loggedin
 
 
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
+            }
 
-@bp.route('/payment')
-def payment():
-    if not is_authenticated():
-        flash('You did not login!', 'success')
-        return redirect(url_for('login.login'))
-    elif 'cart' not in session:
-        return redirect(url_for('customerDashboard.menu'))
-    else:
-        cart = session['cart']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-        cursor.execute('SELECT users.userName, customers.firstName, customers.lastName, customers.email, customers.phoneNumber, customers.Address FROM customers JOIN users ON customers.userID = users.userID WHERE customers.userID = %s',(session['id'],))
-        customerInfo = cursor.fetchone()     
-        return render_template('payment.html', cartJs = json.dumps(cart), cart = cart, customerInfo = customerInfo)
-    
+def getMovies():
+    movieList = []
+    for i in lincolnCinema.allMovie:
+        movieInfo = {
+            'title': i.title,
+            'description': i.description,
+            'language': i.language,
+            'releaseDate': i.releaseDate,
+            'durationMin': i.durationMin,
+            'country': i.country,
+            'genre':i.genre,
+            'id': i.movieID,
+            'status':i.status,
+            'screeningList': i.screeningList
+        }
+        if i.screeningList:
+            sList = []
+            for s in i.screeningList:
+                screeningInfo = {
+                    'screeningID': s.screeningID,
+                    'screeningDate': s.screeningDate,
+                    'startTime': s.startTime,
+                    'endTime': s.endTime,
+                    'cinemaHall': s.cinemaHall.name,
+                    'status': s.status,
+                    'id': s.screeningID,
+                    'seats': s.seats
+                }
+                if s.seats:
+                    hsList = []
+                    for a in s.seats:
+                        theSeat = {
+                            'col': a.col,
+                            'row': a.row,
+                            'seatPlace': a.seatPlace,
+                            'isReserved': a.isReserved,
+                            'seatPrice': a.seatPrice
+                        }
+                        hsList.append(theSeat)
+                    screeningInfo['seats'] = hsList
+                sList.append(screeningInfo)
+            movieInfo['screeningList'] = sList
+        movieList.append(movieInfo)
+    return movieList
 
-def utc_to_local(utc_dt):
-    return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    # preparing data for tracking order page
+def getTheMovies(theID):
+    for i in lincolnCinema.allMovie:
+        if i.movieID == theID:
+            movieInfo = {
+                'title': i.title,
+                'description': i.description,
+                'language': i.language,
+                'releaseDate': i.releaseDate,
+                'durationMin': i.durationMin,
+                'country': i.country,
+                'genre':i.genre,
+                'id': i.movieID,
+                'status':i.status,
+                'screeningList': i.screeningList
+            }
+            if i.screeningList:
+                sList = []
+                for s in i.screeningList:
+                    screeningInfo = {
+                        'screeningID': s.screeningID,
+                        'screeningDate': s.screeningDate,
+                        'startTime': s.startTime,
+                        'endTime': s.endTime,
+                        'cinemaHall': s.cinemaHall.name,
+                        'status': s.status,
+                        'id': s.screeningID,
+                        'seats': s.seats
+                    }
+                    if s.seats:
+                        hsList = []
+                        for a in s.seats:
+                            theSeat = {
+                                'col': a.col,
+                                'row': a.row,
+                                'seatPlace': a.seatPlace,
+                                'isReserved': a.isReserved,
+                                'seatPrice': a.seatPrice
+                            }
+                            hsList.append(theSeat)
+                        screeningInfo['seats'] = hsList
+                    sList.append(screeningInfo)
+                movieInfo['screeningList'] = sList
+                return movieInfo
 
-    # get cart item's preparation time from database
+# get the screeninng info and seats
+def getTheScreening(theID):
+    for s in lincolnCinema.allScreening:
+        if s.screeningID == theID:
+            screeningInfo = {
+                'screeningID': s.screeningID,
+                'screeningDate': s.screeningDate,
+                'startTime': s.startTime,
+                'endTime': s.endTime,
+                'cinemaHall': s.cinemaHall.name,
+                'status': s.status,
+                'id': s.screeningID,
+                'seats': s.seats,
+                'movieID':s.movie.movieID
+            }
+            if s.seats:
+                # 15 seats for a row, included in a list
+                hsList = []
+                hs15List = []
+                for index, a in enumerate(s.seats):
+                    if (index % 15) == 0 and index != 0:
+                        hsList.append(hs15List)
+                        hs15List = []
+                    theSeat = {
+                        'col': a.col,
+                        'row': a.row,
+                        'seatPlace': a.seatPlace,
+                        'isReserved': a.isReserved,
+                        'seatPrice': a.seatPrice
+                    }
+                    hs15List.append(theSeat)
+                    if index == len(s.seats) - 1:
+                        hsList.append(hs15List)
+                screeningInfo['seats'] = hsList
+            return screeningInfo
 
-    cursor.execute('SELECT * from orders WHERE orderID = %s;', (orderID,))
-    orderInfo = cursor.fetchone()
 
-    branchID = orderInfo['branchID']
+@bp.route('/chooseScreening/<int:movieID>')
+def chooseScreening(movieID):
+    try:
+        movie = getTheMovies(movieID)
+        return render_template('checkScreening.html', movie=movie)
+    except:
+        flash('Error, will return to index.','success')
+        return redirect('/')
 
-    cart = json.loads(orderInfo['orderJSON'])
-    for item in cart:
-        if item['id'] < 200:
-            cursor.execute('SELECT preparetime from pizzas WHERE pizzaID = %s;', (item['id'],))
-            result = cursor.fetchone()
-            preparetime = result['preparetime']
-            if item['size']['value'] == 'medium':
-                preparetime += 5
-            if item['size']['value'] == 'large':
-                preparetime += 10
-            item['preparetime'] = preparetime
-        elif item['id'] < 300:
-            cursor.execute('SELECT preparetime from sideOfferings WHERE sideOfferingID = %s;', (item['id'],))
-            result = cursor.fetchone()
-            item['preparetime'] = result['preparetime']
-        else:
-            item['preparetime'] = 0
-
-    cursor.execute('SELECT * from branches WHERE branchID = %s and branchActive = 1;', (branchID,))
-    branchInfo = cursor.fetchone()
-
-    cursor.execute('SELECT * from customers WHERE customerID = %s and customerActive = 1;',(orderInfo['customerID'],))
-    customerInfo = cursor.fetchone()
-
-    startTimeDuration = branchInfo['startTime']
-    totalSeconds = startTimeDuration.total_seconds()
-    hours = int(totalSeconds // 3600)
-    minutes = int((totalSeconds % 3600) // 60)
-    seconds = int(totalSeconds % 60)
-    formattedStartTime = f"{hours:02}:{minutes:02}:{seconds:02}"
-    branchInfo['startTime'] = formattedStartTime
-
-    endTimeDuration = branchInfo['endTime']
-    totalSeconds = endTimeDuration.total_seconds()
-    hours = int(totalSeconds // 3600)
-    minutes = int((totalSeconds % 3600) // 60)
-    seconds = int(totalSeconds % 60)
-    formattedEndTime = f"{hours:02}:{minutes:02}:{seconds:02}"
-    branchInfo['endTime'] = formattedEndTime
-
-    if branchID == 1 or branchID == '1' :
-        branchInfo['GPS'] = [-36.843326, 174.766817]
-    elif branchID == 2 or branchID ==  '2':
-        branchInfo['GPS'] = [50.735544, -1.778984]
-    elif branchID == 3 or branchID == '3':
-        branchInfo['GPS'] = [-41.286790, 174.776222]
-    elif branchID == 4 or branchID == '4':
-        branchInfo['GPS'] = [-45.033108, 168.656930]
-
-    estimatedTime = utc_to_local(orderInfo['estimatedTime'])
-    orderSubmitTime = utc_to_local(orderInfo['orderDate'])
-
-    order = {
-        'orderID': orderID,
-        'cart': cart,
-        'orderMethod': orderInfo['deliveryOption'],
-        'orderStatus': 'order-placed',
-        'specifiedPickupOrDeliveryTime': estimatedTime,
-        'orderSubmitTime': orderSubmitTime,
-        'branchInfo': branchInfo,
-        'customerInfo': customerInfo,
-        'specialRequests': orderInfo['specialRequests']
-    }
-
-    return render_template('trackOrder.html', order=order)
-    
-
-@bp.route('/customer/myOrder')
-def myOrder():
+@bp.route('/chooseSeat/<int:screeningID>')
+def chooseSeat(screeningID):
     if is_authenticated():
-        role = session['role']
-        customerID = getCustomerID(session['id'])
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-        # Fetch customerinfo from the database
+        screening = getTheScreening(screeningID)
+        movie = getTheMovies(screening['movieID'])
+        return render_template('chooseSeat.html', screening=screening, movie=movie)
 
-        # Since I cannot jsonserialise the date object in Js, I can only write this longggggg SQL.
-        cursor.execute('SELECT orders.orderID, orders.orderDate, orders.estimatedTime, orders.deliveryOption, orders.orderJSON,  \
-                       orders.orderStatus, orders.totalAmount, orders.specialRequests, branches.branchName, branches.branchID\
-                       ,payment.paymentMethod\
-                       FROM orders JOIN branches ON branches.branchID = orders.branchID \
-                       JOIN payment ON orders.orderID = payment.orderID\
-                       WHERE orders.customerID = %s',(customerID,))
-        allOrders = cursor.fetchall()
-
-        cursor.execute('SELECT branchName from branches;')
-        allBranch = cursor.fetchall()
-        
-        return render_template('myOrder.html', allOrders = allOrders, allBranch = allBranch)
     else:
-        return redirect(url_for('login.login'))  
+        flash('Error, will return to index.','success')
+        return redirect('/')
+    
 
 
-@bp.route('/customer/msg', methods=['GET'])
+
+
+@bp.route('/payment', methods=['POST'])
+def payment():
+    if is_authenticated():
+        selectedSeats = request.form.getlist('theSeat')
+        movieID = request.form.get('movieID')
+        screeningID = request.form.get('screeningID')
+
+        if not selectedSeats:
+            flash('You need to choose at least one seat!','success')
+            return redirect(f'/chooseSeat/{screeningID}')
+
+        screening = getTheScreening(int(screeningID))
+        movie = getTheMovies(int(movieID))
+        session['selectedSeats'] = selectedSeats
+        session['movieID'] = int(movieID)
+        session['screeningID'] = int(screeningID)
+        totalPrice = len(selectedSeats)* 50
+        return render_template('payment.html', screening=screening, movie=movie,selectedSeats=selectedSeats, totalPrice=totalPrice)
+
+    else:
+        flash('You did not login!', 'success')
+        return redirect('/')
+    
+
+@bp.route('/paymentProcess', methods=['POST'])
+def paymentProcess():
+    if is_authenticated():
+        screeningID = session['screeningID']
+        movieID = session['movieID']
+        selectedSeats = session['selectedSeats']
+        paymentMethod = request.form.get('paymentMethod')
+        username = request.form.get('username')
+
+        cardName = request.form.get('cardName')
+        cardNumber = request.form.get('cardNumber')
+        cardExp = request.form.get('cardExp')
+        cardCVV = request.form.get('cardCVV')
+
+        price = request.form.get('price')
+
+        for s in lincolnCinema.allScreening:
+            if s.screeningID == screeningID:
+                screening = s
+                seatList = s.seats
+                seatListCustomer = []
+                for i in seatList:
+                    for a in selectedSeats:
+                        if i.seatPlace == a:
+                            seatListCustomer.append(i)
+        
+        for u in lincolnCinema.allCustomer:
+            if u.username == username:
+                thisUser = u
+        
+        payment = {
+            'paymentType': paymentMethod, 
+            'cardNumber': cardNumber, 
+            'cardHolder': cardName, 
+            'expiryDate': cardExp, 
+            'cvv': cardCVV
+        }
+
+        
+        makeBookingReturn = lincolnCinema.makeBooking(screening, thisUser, len(selectedSeats), seatListCustomer, payment, price)
+        flash(makeBookingReturn, 'success')
+
+        session.pop('selectedSeats')
+        session.pop('movieID')
+        session.pop('screeningID')
+
+        return redirect('/')
+
+    else:
+        flash('You did not login!', 'success')
+        return redirect('/')
+
+    
+
+
+@bp.route('/myBooking')
+def myBooking():
+    if is_authenticated():
+        allBookingList =[]
+        for u in lincolnCinema.allCustomer:
+            if u.username == session['accountInfo']['username']:
+                for b in u.bookingList:
+                    theBooking = {
+                        'screening': getTheScreening(b.screening.screeningID),
+                        'movie': getTheMovies(b.screening.movie.movieID),
+                        'seats': [],
+                        'status': b.status,
+                        'cinemaHall': b.screening.cinemaHall.name,
+                        'createdOn':b.createdOn,
+                        'bookingID': b.bookingID,
+                        'paymentDetail': b.paymentDetail.amount
+                    }
+                    for s in b.seats:
+                        theBooking['seats'].append(s.seatPlace)
+                    allBookingList.append(theBooking)
+
+
+        return render_template('myBooking.html', allBookingList=allBookingList)
+    else:
+        return redirect('/') 
+    
+
+@bp.route('/cancelBooking/<int:bookingID>')
+def cancelBooking(bookingID):
+    if is_authenticated():
+
+        for u in lincolnCinema.allCustomer:
+            if u.username == session['accountInfo']['username']:
+                for b in u.bookingList:
+                    if b.bookingID == bookingID:
+                        removeBookingReturn = lincolnCinema.removeBooking(u,b)
+                        flash(removeBookingReturn,'success')
+                        return redirect('/myBooking') 
+
+
+        
+    else:
+        return redirect('/') 
+
+
+@bp.route('/msg', methods=['GET'])
 def msg():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-    cursor.execute('SELECT * FROM notifications WHERE customerID = %s',(getCustomerID(session['id']),))
-    allMsg = cursor.fetchall()
+    allMsg = []
+    notiList = lincolnCinema.loggedUser.notiList
+    for i in notiList:
+        noti = {
+            'content': i.content,
+            'time':i.date
+        }
+        allMsg.append(noti)
     return render_template('displayMsg.html', allMsg = reversed(allMsg))
 
-@bp.route('/customer/profile')
+@bp.route('/profile')
 def customerProfile():    
     if is_authenticated():
-        if session['role'] == 'Customer':    
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-            # Fetch customerinfo from the database
-            cursor.execute('SELECT users.userID, users.userName, users.userPassword, customers.title, customers.firstName, customers.lastName, customers.email, customers.phoneNumber, customers.Address, customers.dateOfBirth, customers.Preferences FROM customers JOIN users ON customers.userID = users.userID WHERE customers.userID = %s',(session['id'],))
-            customerInfo = cursor.fetchone()           
-            return render_template('customerProfile.html', customerInfo=customerInfo)
-        else:
-            return "unauthorized"
+        user = lincolnCinema.loggedUser
+       
+        customerInfo = {
+            'userName': user.username,
+            'userPassword': user.userPassword,
+            'firstName': user.name,
+            'email': user.email,
+            'phoneNumber': user.phone,
+            'Address': user.address
+        } 
+        return render_template('customerProfile.html', customerInfo=customerInfo, accountInfo=getAccountInfo())
+
     else:
         return redirect(url_for('login.login'))    
     
-
-    if is_authenticated():
-        userID = request.form.get('userID')        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)    
-        # Fetch customers from the database
-        cursor.execute('''SELECT users.userID, users.userName, users.userPassword, customers.title, customers.firstName, customers.lastName, customers.email, customers.phoneNumber, customers.Address, customers.dateOfBirth, customers.Preferences
-                       FROM customers JOIN users 
-                       ON customers.userID = users.userID 
-                       WHERE customers.customerActive=True AND customers.userID = %s''',(userID,))
-        account = cursor.fetchone()        
-             
-        if account:
-
-            userName = request.form.get('userName')
-            title = request.form.get('title')
-            firstName = request.form.get('firstName')
-            lastName = request.form.get('lastName')
-
-            email = request.form.get('email')
-            phoneNumber = request.form.get('phoneNumber')
-            Address = request.form.get('Address')
-            dateOfBirth = request.form.get('dateOfBirth')
-            Preferences = request.form.get('Preferences')
-            userPassword = request.form.get('userPassword')
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)            
-            #if username is changed:
-            if userName != account['userName']:
-                #check if username already exists in database                
-                if userNameCrash(userName):
-                    flash('Failed. Username already exists. Please choose a different username.','error')
-                    return redirect(url_for('customerDashboard.customerProfile'))
-                else:                    
-                    cursor.execute('UPDATE users SET userName=%s WHERE userID=%s',(userName, userID))
-
-                    mysql.connection.commit()
-                    flash('Username changed successfully!','success')
-
-            # check if the password is changed by comparing the input password with the password stored in database
-
-            if userPassword.encode('utf-8') !=  account['userPassword'].encode('utf-8'):
-                if userPassword != "********" and not bcrypt.checkpw(userPassword.encode('utf-8'), account['userPassword'].encode('utf-8')):                    
-                    # if password is changed, then the new password needs to be encrypted before inserting into databse
-                    hashed = passwordEncrypt(userPassword)
-                    cursor.execute('UPDATE users SET userPassword=%s WHERE userID=%s',(hashed, userID))
-                    mysql.connection.commit()
-                    flash('Password changed successfully!','success')
-            
-            if 'avatar' in request.files and request.files['avatar'].filename != '':                
-                avatar = request.files.get('avatar')                
-                avatarName = f"{userID}.jpg"                
-                filePath = os.path.join('app', 'static', 'avatar', avatarName)
-                avatar.save(filePath)
-
-            if firstName != account['firstName'] or lastName != account['lastName'] or phoneNumber != account['phoneNumber'] or title != account['title'] or email != account['email'] or Address != account['Address'] or dateOfBirth != account['dateOfBirth'] or Preferences != account['Preferences']:
-                    cursor.execute('UPDATE customers SET title=%s,firstName=%s,lastName=%s,email=%s,phoneNumber=%s,Address=%s,dateOfBirth=%s,Preferences=%s WHERE customers.userID = %s', (title,firstName,lastName,email,phoneNumber,Address,dateOfBirth,Preferences,userID,))
-                    mysql.connection.commit()
-                    flash('Profile information updated successfully!','success')
-                    return redirect(url_for('customerDashboard.customerProfile'))           
-            else:                
-                return redirect(url_for('customerDashboard.customerProfile'))
-        else:
-            return "unauthorized"
-    else:
-        return redirect(url_for('login.login'))

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{{movie.title}} - Choose Seats{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4 col-lg-12">
+    <h1 class="display-5 lead text-center">{{movie.title}} - Choose Seats</h1>
+
+    <!-- Display each news item -->
+    <div class="container my-5 col-md-12 col-sm-12">
+
+        <div class="card my-5">
+            <div class="card-header">
+                <h3><strong>{{ movie.title }}</strong></h3><small>Screening On: <strong>{{
+                        screening.screeningDate.strftime('%Y-%m-%d %H:%M:%S') }}</strong></small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p class="m-0"><strong>Language: </strong>{{movie.language}}</p>
+                        <p class="m-0"><strong>Country: </strong>{{movie.country}}</p>
+                        <p class="m-0"><strong>Genre: </strong>{{movie.genre}}</p>
+                        <p class="m-0"><strong>Released on: </strong>{{ movie.releaseDate.strftime('%Y-%m-%d') }}</p>
+                        <p class="m-0"><strong>Duration: </strong>{{movie.durationMin}} min</p>
+                        <hr class="my-2">
+                        <p class="m-0"><strong>Description: </strong>{{movie.description}}</p>
+                        <hr class="my-2">
+                    </div>
+                    <div class="col-md-9">
+                        <form method="POST" action="/payment" id="add-form" class="needs-validation" novalidate
+                            enctype="multipart/form-data">
+                            <input type="hidden" name="movieID" value="{{movie.id}}">
+                            <input type="hidden" name="screeningID" value="{{screening.screeningID}}">
+                        <h2 class="lead text-center">Screen in {{screening.cinemaHall}}</h2>
+                        <hr>
+                        <table class="table table-bordered border-danger">
+                            <thead>
+                                <tr>
+                                    {% for i in range(16) %}
+                                    <th>{{i if i>0}}</th>
+                                    {%endfor%}
+                            </thead>
+                            <tbody>
+                                {% for seatRow in screening.seats %}
+                                <tr>
+                                    <td>{{seatRow[0].col}}</td>
+                                    {%for i in seatRow %} 
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                name="theSeat" value="{{i.seatPlace}}" {% if i.isReserved %} disabled {%endif%}>
+                                        </div>
+                                    </td>
+                                    {%endfor%}
+                                </tr>
+                                {% endfor %}
+                                
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-warning">Submit the booking</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+{% endblock %}

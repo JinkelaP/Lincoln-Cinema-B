@@ -92,6 +92,10 @@ class User(Person, ABC):  # inherit
     @property
     def userPassword(self):
         return self._userPassword
+    
+    @property
+    def userID(self):
+        return self._userID
 
     @userPassword.setter
     def userPassword(self, newPassword):
@@ -124,6 +128,7 @@ class Admin(User):
     def addScreening(self, movie, date, dateT, dateTEnd, cinemaHall, hallSeat, allScreening) -> bool:
         newScreening = Screening(movie, date, dateT, dateTEnd, cinemaHall, hallSeat)
         allScreening.append(newScreening)
+        movie.addScreening(newScreening)
         return newScreening
 
     def cancelMovie(self, movie) -> None:
@@ -221,6 +226,9 @@ class Movie:
     @property
     def screeningList(self):
         return self.__screeningList
+    
+    def addScreening(self, screening: 'Screening'):
+        self.__screeningList.append(screening)
 
 
 # Screening class
@@ -231,8 +239,8 @@ class Screening:
         self.__screeningDate = screeningDate
         self.__startTime = startTime
         self.__endTime = endTime
-        self.__cinemaHall: CinemaHall = None
-        self.__seats: List[CinemaHallSeat] = []
+        self.__cinemaHall: CinemaHall = hall
+        self.__seats: List[CinemaHallSeat] = hallSeat
         self.__status = True
         self.__screeningID = Screening.nextID
         Screening.nextID += 1
@@ -481,10 +489,12 @@ class Coupon:
 
 
 class DebitCard(Payment):
-    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str):
+    def __init__(self, amount: int, cardNumber: str, cardHolder: str, expiryDate: str, cvv: str):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
+        self.__expiryDate = expiryDate
+        self.__cvv = cvv
 
     @property
     def cardNumber(self):
@@ -493,17 +503,26 @@ class DebitCard(Payment):
     @property
     def cardHolder(self):
         return self.__cardHolder
+    
+    @property
+    def expiryDate(self):
+        return self.__expiryDate
+    
+    @property
+    def cvv(self):
+        return self.__cvv
 
 
 # CreditCard class
 
 
 class CreditCard(Payment):
-    def __init__(self, amount: Decimal, cardNumber: str, cardHolder: str, expiryDate: date):
+    def __init__(self, amount: int, cardNumber: str, cardHolder: str, expiryDate: str, cvv: str):
         super().__init__(amount)
         self.__cardNumber = cardNumber
         self.__cardHolder = cardHolder
         self.__expiryDate = expiryDate
+        self.__cvv = cvv
 
     @property
     def cardNumber(self):
@@ -516,6 +535,10 @@ class CreditCard(Payment):
     @property
     def expiryDate(self):
         return self.__expiryDate
+    
+    @property
+    def cvv(self):
+        return self.__cvv
 
 
 # Cash class

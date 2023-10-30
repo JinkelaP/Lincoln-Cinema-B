@@ -168,7 +168,7 @@ class Cinema:
         return screening.seats
 
     def makeBooking(self, screening: Screening, user: Customer, numberOfSeats: int, seats: list, payment: dict, price: Decimal, coupon: Coupon = None) -> str:
-        # payment = {paymentType: str, cardNumber: str, cardHolder: str, expiryDate: date}
+        # payment = {paymentType: str, cardNumber: str, cardHolder: str, expiryDate: date, cvv: str}
         
         """! Make a booking, creating the ticket"""
 
@@ -181,16 +181,17 @@ class Cinema:
                 return 'Invalid Coupon'
 
         if payment['paymentType'] == 'credit':
-            paymentNew = CreditCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+            paymentNew = CreditCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'], payment['cvv'])
         elif payment['paymentType'] == 'debit':
-            paymentNew = DebitCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'])
+            paymentNew = DebitCard(price, payment['cardNumber'], payment['cardHolder'], payment['expiryDate'], payment['cvv'])
         else:
             paymentNew = Cash(price)
 
         newBooking = self.loggedUser.makeBooking(user, screening, numberOfSeats, price, paymentNew)
 
         for i in seats:
-            i.isReserved = False
+            i.isReserved = True
+            i.userID = user.userID
             newBooking.addSeat(i)
 
         user.addBookings(newBooking)
@@ -202,7 +203,7 @@ class Cinema:
         """! deactivate a ticket"""
         self.loggedUser.cancelBooking(ticket)
 
-        msg = f'You have successfully cancelled the tickets!'
+        msg = f'You have successfully cancelled the ticket!'
         user.addNoti(Notification(user, msg))
         return msg
 
@@ -220,9 +221,10 @@ class Cinema:
         # validate datetime conflicts, generate seats
         dateTEnd = dateT + timedelta(minutes=movie.durationMin)
         for i in self.allScreening:
-            if dateT < i.endTime and dateTEnd > i.startTime:
-                if i.CinemaHall.name == hallName:
-                    return 'Creat screening failed. Time Conflicts detected.'
+            if i.status == True:
+                if dateT < i.endTime and dateTEnd > i.startTime:
+                    if i.cinemaHall.name == hallName:
+                        return 'Creat screening failed. Time Conflicts detected.'
         else:
             for i in self.allHall:
                 if i.name == hallName:
@@ -271,13 +273,12 @@ class Cinema:
             if type(a.userID) == int:
                 for user in self.allCustomer:
                     if user.userID == a.userID:
-                        user.addNoti(user, f'The screening your booked on {screening.screeningDate.strftime("%d-%m-%Y")} has been cancelled.')
+                        user.addNoti(Notification(user, f'The screening seat {a.seatPlace} your booked on {screening.screeningDate.strftime("%d-%m-%Y")} has been cancelled.'))
                         for ticket in user.bookingList:
                             if ticket.screening == screening:
                                 ticket.status = False
 
         return 'Screening cancelled. Customers has been notified.'
-
 
     def sendPublicMsg(self, msg: str) -> str:
 

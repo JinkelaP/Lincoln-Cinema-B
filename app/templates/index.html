@@ -15,6 +15,7 @@
       {% if movieList %}
       <div class="row">
         {% for i in movieList %}
+        {% if i.status %}
       <div class="col-md-4">
         
         <div class="card mx-2 my-2">
@@ -23,77 +24,14 @@
           <div class="card-body">
             <h5 class="card-title"><strong>{{i.title}}</strong></h5>
             <p class="card-text">{{i.description}}</p>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-              data-bs-target="#buyticket{{i.title}}">Details</button>
+            <a href="/chooseScreening/{{i.id}}" class="btn btn-primary" 
+              >Buy tickets now!</a>
 
-            <div class="container w-50 m-auto">
-              <div class="modal fade" id="buyticket{{i.title}}" tabindex="-1" aria-labelledby="carTitle"
-                aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h1 class="modal-title fs-5" id="carTitle">{{i.title}}</h1>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form method="POST" id="edit-form" class="needs-validation" novalidate>
-                      <div class="modal-body">
-                        <div class="row g-3">
-
-                          <img src="{{ url_for('static', filename='movieCover.jpg') }}" class="card-img-top"
-                            alt="carphoto">
-
-                          <div class="col-sm-6">
-                            <label for="rego" class="form-label">Language</label>
-                            <input type="text" class="form-control" id="rego" name="rego" placeholder="Rego"
-                              pattern="[A-Z0-9]*" maxlength="6" value="{{i.language}}" required disabled>
-
-                          </div>
-
-                          <div class="col-sm-6">
-                            <label for="year" class="form-label">Release Date</label>
-                            <input type="text" class="form-control" id="year" name="year" placeholder="Year"
-                              pattern="[0-9]*" maxlength="4" value="{{i.releaseDate}}" required disabled>
-                          </div>
-
-                          <div class="col-sm-6">
-                            <label for="brand" class="form-label">Duration (Min)</label>
-                            <input type="text" class="form-control" id="brand" name="brand" placeholder="brand"
-                              pattern="[A-Za-z]*" value="{{i.durationMin}}" maxlength="30" required disabled>
-
-                          </div>
-
-                          <div class="col-sm-6">
-                            <label for="model" class="form-label">Country</label>
-                            <input type="text" class="form-control" id="modal" name="modal" value="{{i.country}}"
-                              placeholder="Model" pattern="[a-zA-Z0-9]+" maxlength="20" required disabled>
-
-                          </div>
-
-                          <div class="col-sm-6">
-                            <label for="seat" class="form-label">Genre</label>
-                            <input type="text" class="form-control" id="seat" name="seat" value="{{i.genre}}"
-                              placeholder="Seat" pattern="^[0-9]+$" maxlength="2" required disabled>
-
-                          </div>
-
-
-                        </div>
-                        <div class="modal-footer my-1">
-                          <a href="/chooseScreening/{{i.id}}" class="btn btn-warning">Choose Screenings</a>
-                        </div>
-                      </div>
-                    </form>
-
-
-
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
         
       </div>
+      {%endif%}
       {%endfor%}
     </div>
       {%endif%}

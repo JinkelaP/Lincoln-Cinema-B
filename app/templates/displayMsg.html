@@ -13,10 +13,10 @@
         {% for item in allMsg %}
         <div class="card my-5">
             <div class="card-header">
-                <h3>{{ item['title'] }}</h3><small>{{ item['dateSent'].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                <h3>{{ item['time'].strftime('%Y-%m-%d %H:%M:%S') }}</h3><small></small>
             </div>
             <div class="card-body">
-                <p class="card-text">{{ item['content']|replace("\n", "<br>")|safe}}</p>
+                <p class="card-text">{{ item['content']}}</p>
             </div>
         </div>
         {% endfor %}

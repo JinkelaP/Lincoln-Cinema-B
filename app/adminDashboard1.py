@@ -12,75 +12,128 @@ bp = Blueprint('adminDashboard1', __name__, )
 def is_authenticated():
     return lincolnCinema.loggedin
 
+def getAccountInfo():
+    return {
+                'name': lincolnCinema.loggedUser.name,
+                'auth': lincolnCinema.loggedin,
+                'username': lincolnCinema.loggedUser.username
+            }
+
+def getMovies():
+    movieList = []
+    for i in lincolnCinema.allMovie:
+        movieInfo = {
+            'title': i.title,
+            'description': i.description,
+            'language': i.language,
+            'releaseDate': i.releaseDate,
+            'durationMin': i.durationMin,
+            'country': i.country,
+            'genre':i.genre,
+            'id': i.movieID,
+            'status':i.status,
+            'screeningList': i.screeningList
+        }
+        if i.screeningList:
+            sList = []
+            for s in i.screeningList:
+                screeningInfo = {
+                    'screeningID': s.screeningID,
+                    'screeningDate': s.screeningDate,
+                    'startTime': s.startTime,
+                    'endTime': s.endTime,
+                    'cinemaHall': s.cinemaHall.name,
+                    'status': s.status,
+                    'id': s.screeningID,
+                    'seats': s.seats
+                }
+                if s.seats:
+                    hsList = []
+                    for a in s.seats:
+                        theSeat = {
+                            'col': a.col,
+                            'row': a.row,
+                            'seatPlace': a.seatPlace,
+                            'isReserved': a.isReserved,
+                            'seatPrice': a.seatPrice
+                        }
+                        hsList.append(theSeat)
+                    screeningInfo['seats'] = hsList
+                sList.append(screeningInfo)
+            movieInfo['screeningList'] = sList
+        movieList.append(movieInfo)
+    return movieList
 
 
+@bp.route('/allMovies', methods=['GET'])
+def allMovies():
+    if is_authenticated():
+        movieList = getMovies()
 
-@bp.route('/addMovies', methods=['GET'])
+        return render_template('allMovies.html', movieList=movieList)
+    else:
+        return redirect('/')
+
+
+@bp.route('/addMovies', methods=['POST'])
 def addMovies():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if is_authenticated():
+        title = request.form.get('title')
+        description = request.form.get('description')
+        language = request.form.get('language')
+        releaseDate = request.form.get('releaseDate')
+        durationMin = request.form.get('durationMin')
+        country = request.form.get('country')
+        genre = request.form.get('genre')
 
-        # Fetch the pizzas, side offerings, and drinks that are national (branchID is NULL) and active
-        cursor.execute('SELECT * FROM pizzas WHERE branchID IS NULL AND pizzaActive = TRUE ORDER BY pizzaName')
-        pizzas = cursor.fetchall()
+        addMovieReturn = lincolnCinema.addMovie(title, description, int(durationMin), language, datetime.strptime(releaseDate, '%Y-%m-%d').date(), country, genre)
 
-        # Group the pizzas by their name
-        pizzas = [list(g) for k, g in groupby(pizzas, key=itemgetter('pizzaName'))]
+        flash(addMovieReturn,'success')
+        return redirect('/allMovies')
+    else:
+        return redirect('/')
+    
 
-        cursor.execute('SELECT * FROM sideOfferings WHERE branchID IS NULL AND sideOfferingActive = TRUE')
-        side_offerings = cursor.fetchall()
+@bp.route('/addScreenings', methods=['POST'])
+def addScreenings():
+    if is_authenticated():
+        dateT = request.form.get('dateT')
+        hallName = request.form.get('hallName')
+        movieID = request.form.get('movieID')
+        for m in lincolnCinema.allMovie:
+            if m.movieID == int(movieID):
+                addScreeningReturn = lincolnCinema.addScreening(m, datetime.strptime(dateT, '%Y-%m-%dT%H:%M'), hallName)
 
-        cursor.execute('SELECT * FROM drinks WHERE branchID IS NULL AND drinkActive = TRUE')
-        drinks = cursor.fetchall()
-
-        cursor.execute('SELECT * FROM toppings WHERE toppingActive = TRUE')
-        toppings = cursor.fetchall()
-
-        cursor.close()
-
-        return render_template('nationalProducts.html', pizzas=pizzas, side_offerings=side_offerings, drinks=drinks, toppings=toppings)
-
-    return redirect(url_for('login.login'))
+        flash(addScreeningReturn,'success')
+        return redirect('/allMovies')
+    else:
+        return redirect('/')
 
 
-@bp.route('/addPizza', methods=['POST'])
-def addPizza():
-    if 'loggedin' in session and session['role'] == 'HQ_Admin':
-        pizzaName = request.form['pizzaName']
-        description = request.form['description']
-        
-        sizes = ['Small', 'Medium', 'Large']
-        prices = [request.form['smallPrice'], request.form['mediumPrice'], request.form['largePrice']]
-        preparetimes = [request.form['smallPrepareTime'], request.form['mediumPrepareTime'], request.form['largePrepareTime']]
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        for size, price, preparetime in zip(sizes, prices, preparetimes):
-            cursor.execute("""
-                INSERT INTO pizzas (pizzaName, description, size, price, preparetime)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (pizzaName, description, size, price, preparetime))
-        
-        if 'pizzaImage' in request.files and request.files['pizzaImage'].filename != '':
-            image = request.files.get('pizzaImage')
-            # fetch the id of the pizza that was just inserted
-            first_pizzaId = cursor.lastrowid
+@bp.route('/deleteMovies/<int:movieID>')
+def deleteMovie(movieID):
+    if is_authenticated():
+        for m in lincolnCinema.allMovie:
+            if m.movieID == movieID:
+                removeMovieReturn = lincolnCinema.removeMovie(m)
+                flash(removeMovieReturn, 'success')
+                return redirect('/allMovies')
             
-            for offset in range(3):
-                pizzaId = first_pizzaId - offset
-                imageName = f"{pizzaId}.jpg"
-                filePath = os.path.join('app', 'static', 'image', imageName)
-                # save the image to the file system
-                with open(filePath, 'wb') as f:
-                    f.write(image.read())
-                    # reset the file pointer to the beginning of the file
-                    image.seek(0)
+        flash('Error', 'success')
+        return redirect('/allMovies')
+    else:
+        return redirect('/')
+    
+@bp.route('/deleteScreenings/<int:screeningID>')
+def deleteScreening(screeningID):
+    if is_authenticated():
+        for m in lincolnCinema.allScreening:
+            if m.screeningID == screeningID:
+                removeScreeningReturn = lincolnCinema.removeScreening(m)
+                flash(removeScreeningReturn, 'success')
+                return redirect('/allMovies')
 
-        mysql.connection.commit()
-        cursor.close()
-        
-        return redirect(url_for('adminDashboard1.nationalProducts'))
-    return redirect(url_for('login.login'))
-
-
+        flash('Error', 'success')
+        return redirect('/allMovies')
+    else:
+        return redirect('/')

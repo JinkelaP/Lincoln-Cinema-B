@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Management{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4 col-lg-10">
+    <h1 class="display-5 lead text-center">All movies & Screenings</h1>
+
+    <!-- Display each news item -->
+    <div class="container my-5 col-md-12 col-sm-12">
+        <button type="button" class="btn btn-warning px-4 my-0" data-bs-toggle="modal" data-bs-target="#add-movie">Add a
+            new movie</button>
+        <div class="container w-50 m-auto">
+            <div class="modal fade" id="add-movie" tabindex="-1" aria-labelledby="addMovie" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="movieAdd">Add a new movie!</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="/addMovies" id="add-form" class="needs-validation" novalidate
+                            enctype="multipart/form-data">
+                            <div class="modal-body">
+                                <div class="row g-3">
+
+
+                                    <div class="col-sm-6">
+                                        <label for="title" class="form-label">Title</label>
+                                        <input type="text" class="form-control" id="title" name="title"
+                                            placeholder="Jaws" pattern="[A-Za-z]*" maxlength="30" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Alphabets only.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="language" class="form-label">Language</label>
+                                        <input type="text" class="form-control" id="language" name="language"
+                                            placeholder="English" pattern="[A-Za-z]*" maxlength="15" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Alphabets only.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="country" class="form-label">Country</label>
+                                        <input type="text" class="form-control" id="country" name="country"
+                                            placeholder="NZ" pattern="[A-Za-z]*" maxlength="20" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Alphabets only.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="genre" class="form-label">Genre</label>
+                                        <input type="text" class="form-control" id="genre" name="genre"
+                                            placeholder="Comedy" pattern="[A-Za-z]*" maxlength="20" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Alphabets only.
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-sm-6">
+                                        <label for="durationMin" class="form-label">Duration (Min)</label>
+                                        <input type="text" class="form-control" id="durationMin" name="durationMin"
+                                            placeholder="120" pattern="^[0-9]+$" maxlength="3" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Numbers Only.
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="col-sm-6">
+                                        <label for="releaseDate" class="form-label">Release Date</label>
+                                        <input type="date" class="form-control" id="releaseDate" name="releaseDate"
+                                            required>
+                                        <div class="invalid-feedback">
+                                            Invalid date.
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-sm-12">
+                                        <label for="description" class="form-label">Description</label>
+                                        <input type="text" class="form-control" id="description" name="description"
+                                            placeholder="blablablablablabla" maxlength="200" required>
+                                        <div class="invalid-feedback">
+                                            Invalid. Alphabets only.
+                                        </div>
+                                    </div>
+
+
+
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-warning">Create</button>
+                            </div>
+                        </form>
+
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% for i in movieList %}
+        <div class="card my-5">
+            <div class="card-header">
+                <h3><strong>{{ i.title }}</strong></h3><small>Released On:{{ i.releaseDate.strftime('%Y-%m-%d') }} {{ 'Valid' if
+                    i.status else 'Invalid' }}</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p class="m-0"><strong>Language: </strong>{{i.language}}</p>
+                        <p class="m-0"><strong>Country: </strong>{{i.country}}</p>
+                        <p class="m-0"><strong>Genre: </strong>{{i.genre}}</p>
+                        <p class="m-0"><strong>Released on: </strong>{{ i.releaseDate.strftime('%Y-%m-%d') }}</p>
+                        <p class="m-0"><strong>Duration: </strong>{{i.durationMin}} min</p>
+                        <hr class="my-2">
+                        <p class="m-0"><strong>Description: </strong>{{i.description}}</p>
+                        <hr class="my-2">
+                        {% if i.status %}
+                        <a class="btn btn-danger my-2 px-4" href="/deleteMovies/{{i.id}}">Delete Movie</a>
+                        <button type="button" class="btn btn-outline-warning px-3 my-2" data-bs-toggle="modal"
+                            data-bs-target="#add-sc{{i.id}}">Add a screening</button>
+                        <div class="container w-50 m-auto">
+                            <div class="modal fade" id="add-sc{{i.id}}" tabindex="-1" aria-labelledby="addMovie"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="movieAdd">Add a new movie!</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <form method="POST" action="/addScreenings" id="add-form" class="needs-validation"
+                                            novalidate enctype="multipart/form-data">
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+
+                                                    <div class="col-sm-6">
+                                                        <label for="movieID" class="form-label">Movie ID</label>
+                                                        <input type="text" class="form-control" id="movieID" name="movieID"
+                                                            value="{{i.id}}"  readonly>
+                                                        
+                                                    </div>
+
+
+                                                    <div class="col-sm-6">
+                                                        <label for="country" class="form-label">Hall</label>
+                                                        <select class="form-select my-1" name="hallName" required>
+                                                            <option value="H1" selected>Hall 1</option>
+                                                            <option value="H2">Hall 2</option>
+                                                            <option value="H3">Hall 3</option>
+                                                            <option value="H4">Hall 4</option>
+                                                          </select>
+                                                        
+                                                    </div>
+
+                                                    <div class="col-sm-6">
+                                                        <label for="releaseDate" class="form-label">Start from</label>
+                                                        <input type="datetime-local" class="form-control" id="dateT"
+                                                            name="dateT" required>
+                                                        <div class="invalid-feedback">
+                                                            Invalid date.
+                                                        </div>
+                                                    </div>
+
+
+
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-warning">Create</button>
+                                            </div>
+                                        </form>
+
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {%endif%}
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ScreeningID</th>
+                                    <th>Date</th>
+                                    <th>Start at</th>
+                                    <th>End at</th>
+                                    <th>Hall</th>
+                                    <th>Status</th>
+                                    <th>Operation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in i.screeningList %}
+                                <tr>
+                                    <td>{{a.screeningID}}</td>
+                                    <td>{{a.screeningDate.strftime('%Y-%m-%d')}}</td>
+                                    <td>{{a.startTime.strftime('%H:%M:%S')}}</td>
+                                    <td>{{a.endTime.strftime('%H:%M:%S')}}</td>
+                                    <td>{{a.cinemaHall}}</td>
+                                    <td>{{ 'Valid' if a.status else 'Invalid' }}</td>
+                                    {% if a.status %}
+                                    <td><a class="btn btn-sm btn-danger" href="/deleteScreenings/{{a.id}}">Delete</a>
+                                    </td>
+                                    {%endif%}
+                                </tr>
+
+                                {% endfor%}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

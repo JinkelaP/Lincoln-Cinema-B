@@ -12,6 +12,51 @@ def getAccountInfo():
                 'username': lincolnCinema.loggedUser.username
             }
 
+def getMovies():
+    movieList = []
+    for i in lincolnCinema.allMovie:
+        movieInfo = {
+            'title': i.title,
+            'description': i.description,
+            'language': i.language,
+            'releaseDate': i.releaseDate,
+            'durationMin': i.durationMin,
+            'country': i.country,
+            'genre':i.genre,
+            'id': i.movieID,
+            'status':i.status,
+            'screeningList': i.screeningList
+        }
+        if i.screeningList:
+            sList = []
+            for s in i.screeningList:
+                screeningInfo = {
+                    'screeningID': s.screeningID,
+                    'screeningDate': s.screeningDate,
+                    'startTime': s.startTime,
+                    'endTime': s.endTime,
+                    'cinemaHall': s.cinemaHall.name,
+                    'status': s.status,
+                    'id': s.screeningID,
+                    'seats': s.seats
+                }
+                if s.seats:
+                    hsList = []
+                    for a in s.seats:
+                        theSeat = {
+                            'col': a.col,
+                            'row': a.row,
+                            'seatPlace': a.seatPlace,
+                            'isReserved': a.isReserved,
+                            'seatPrice': a.seatPrice
+                        }
+                        hsList.append(theSeat)
+                    screeningInfo['seats'] = hsList
+                sList.append(screeningInfo)
+            movieInfo['screeningList'] = sList
+        movieList.append(movieInfo)
+    return movieList
+
 
 @bp.route('/')
 def realIndex():
@@ -45,29 +90,8 @@ def readFile():
 @bp.route("/index", methods=['GET'])
 def indexPage():
     if lincolnCinema.readFileStatus == True:
-        movieList = []
-        for i in lincolnCinema.allMovie:
-            if i.status:
-                movieInfo = {
-                    'title': i.title,
-                    'description': i.description,
-                    'language': i.language,
-                    'releaseDate': i.releaseDate,
-                    'durationMin': i.durationMin,
-                    'country': i.country,
-                    'genre':i.genre,
-                    'id': i.movieID
-                }
-                movieList.append(movieInfo)
+        return render_template('index.html',movieList=getMovies())
 
-        if lincolnCinema.loggedin == None:
-            return render_template('index.html',movieList=movieList)
-        else:
-            accountInfo = {
-                'name': lincolnCinema.loggedUser.name,
-                'auth': lincolnCinema.loggedin
-            }
-            return render_template('index.html', accountInfo=accountInfo, movieList=movieList)
     else:
         return redirect('/')
     
